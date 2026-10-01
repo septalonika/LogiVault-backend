@@ -41,19 +41,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void businessException_rendersProblemDetailWithCodeAndExtraProperties() throws Exception {
+    void businessException_rendersErrorEnvelopeWithCodeAndDetails() throws Exception {
         mvc.perform(post("/test/orders"))
                 .andExpect(status().isConflict())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.title").value("Conflict"))
                 .andExpect(jsonPath("$.code").value("INSUFFICIENT_STOCK"))
-                .andExpect(jsonPath("$.detail").value("Not enough stock for 1 line(s)"))
-                .andExpect(jsonPath("$.instance").value("/test/orders"))
-                .andExpect(jsonPath("$.lines", hasSize(1)))
-                .andExpect(jsonPath("$.lines[0].sku").value("TS-RED-M"))
-                .andExpect(jsonPath("$.lines[0].requested").value(5))
-                .andExpect(jsonPath("$.lines[0].available").value(3));
+                .andExpect(jsonPath("$.message").value("Not enough stock for 1 line(s)"))
+                .andExpect(jsonPath("$.details.lines", hasSize(1)))
+                .andExpect(jsonPath("$.details.lines[0].sku").value("TS-RED-M"))
+                .andExpect(jsonPath("$.details.lines[0].requested").value(5))
+                .andExpect(jsonPath("$.details.lines[0].available").value(3));
     }
 
     @Test
@@ -72,8 +70,7 @@ class GlobalExceptionHandlerTest {
     void malformedJson_returns400ValidationError() throws Exception {
         mvc.perform(post("/test/validate").contentType(MediaType.APPLICATION_JSON).content("{oops"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.instance").value("/test/validate"));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
     @Test
@@ -109,7 +106,7 @@ class GlobalExceptionHandlerTest {
         mvc.perform(get("/test/boom"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
-                .andExpect(jsonPath("$.detail").value("Unexpected server error"))
+                .andExpect(jsonPath("$.message").value("Unexpected server error"))
                 .andExpect(content().string(not(containsString("secret-internal-detail"))));
     }
 

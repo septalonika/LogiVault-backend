@@ -50,12 +50,12 @@ class StockHistoryIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/variants/" + variantId + "/movements").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].type").value("ADJUSTMENT"))
-                .andExpect(jsonPath("$.content[0].stockBefore").value(10))
-                .andExpect(jsonPath("$.content[0].stockAfter").value(7))
-                .andExpect(jsonPath("$.content[0].actor.name").value(admin.getName()))
-                .andExpect(jsonPath("$.content[1].type").value("STOCK_IN"));
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].type").value("ADJUSTMENT"))
+                .andExpect(jsonPath("$.data[0].stockBefore").value(10))
+                .andExpect(jsonPath("$.data[0].stockAfter").value(7))
+                .andExpect(jsonPath("$.data[0].actor.name").value(admin.getName()))
+                .andExpect(jsonPath("$.data[1].type").value("STOCK_IN"));
     }
 
     @Test
@@ -69,8 +69,8 @@ class StockHistoryIT extends AbstractIntegrationTest {
                         .param("type", "ADJUSTMENT")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].type").value("ADJUSTMENT"));
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].type").value("ADJUSTMENT"));
     }
 
     @Test
@@ -86,7 +86,7 @@ class StockHistoryIT extends AbstractIntegrationTest {
                         .param("from", today).param("to", today)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1));
+                .andExpect(jsonPath("$.data.length()").value(1));
     }
 
     @Test
@@ -123,7 +123,7 @@ class StockHistoryIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/variants/" + variantId + "/movements").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(5));
+                .andExpect(jsonPath("$.data.length()").value(5));
 
         // 1 query for the variant existence check, 1 for the count, 1 for the page with actor fetch-joined.
         assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(3);
@@ -140,7 +140,7 @@ class StockHistoryIT extends AbstractIntegrationTest {
         String body = mockMvc.perform(postItem(request, adminToken))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode created = objectMapper.readTree(body);
+        JsonNode created = objectMapper.readTree(body).get("data");
         return UUID.fromString(created.get("variants").get(0).get("id").asText());
     }
 

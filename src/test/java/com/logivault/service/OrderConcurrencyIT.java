@@ -63,10 +63,10 @@ class OrderConcurrencyIT extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("lines", List.of(line(a, 2), line(b, 3))))))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.lines.length()").value(1))
-                .andExpect(jsonPath("$.lines[0].variantId").value(b.toString()))
-                .andExpect(jsonPath("$.lines[0].requested").value(3))
-                .andExpect(jsonPath("$.lines[0].available").value(1));
+                .andExpect(jsonPath("$.details.lines.length()").value(1))
+                .andExpect(jsonPath("$.details.lines[0].variantId").value(b.toString()))
+                .andExpect(jsonPath("$.details.lines[0].requested").value(3))
+                .andExpect(jsonPath("$.details.lines[0].available").value(1));
 
         assertThat(stockOf(a)).isEqualTo(5);
         assertThat(stockOf(b)).isEqualTo(1);

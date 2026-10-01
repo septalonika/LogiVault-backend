@@ -9,7 +9,9 @@ REST API for a shop's warehouse inventory: items, variants, prices, stock and sa
 ## In plain words / Penjelasan sederhana
 *No technical background needed for this section. / Bagian ini bisa dibaca tanpa latar belakang IT.*
 
-### English
+<details>
+<summary><b>🇬🇧 English</b></summary>
+
 **The problem.** Many shops track stock in notebooks or spreadsheets. The numbers drift from what is really on the shelf, items get sold that are already gone, and when stock goes missing nobody can tell who changed it or why.
 
 **What LogiVault does.** It is the "brain" behind a shop's inventory. Other apps, such as a cashier (POS) app or an admin panel, connect to it to:
@@ -25,7 +27,11 @@ REST API for a shop's warehouse inventory: items, variants, prices, stock and sa
 
 **About the name.** *LogiVault* = **Logistics** + **Vault** (a safe place to keep valuables): a logistics system that is secure, accurate and keeps reliable records of every stock movement.
 
-### Bahasa Indonesia
+</details>
+
+<details>
+<summary><b>🇮🇩 Bahasa Indonesia</b></summary>
+
 **Masalahnya.** Banyak toko mencatat stok di buku atau spreadsheet. Angkanya sering tidak cocok dengan barang di rak, barang yang sudah habis tetap terjual, dan kalau stok hilang tidak ada yang tahu siapa yang mengubahnya atau kenapa.
 
 **Apa yang dilakukan LogiVault.** LogiVault adalah "otak" pengelolaan stok toko. Aplikasi lain, misalnya aplikasi kasir (POS) atau panel admin, terhubung ke LogiVault untuk:
@@ -40,6 +46,8 @@ REST API for a shop's warehouse inventory: items, variants, prices, stock and sa
 **Yang bukan LogiVault.** LogiVault tidak punya tampilan layar sendiri. Ia adalah mesinnya; aplikasi kasir atau panel admin adalah tampilan yang dibangun di atasnya.
 
 **Arti nama.** *LogiVault* = **Logistics** (logistik) + **Vault** (brankas, tempat penyimpanan aman): sistem logistik yang aman, akurat, dan menjaga keakuratan data dalam setiap pergerakan stok.
+
+</details>
 
 ### Glossary / Glosarium
 | Term / Istilah | English | Bahasa Indonesia |
@@ -57,7 +65,7 @@ REST API for a shop's warehouse inventory: items, variants, prices, stock and sa
 | Stock movement | One recorded change in stock: stock in, sale, cancel or correction. | Satu catatan perubahan stok: barang masuk, penjualan, pembatalan, atau koreksi. |
 | Swagger UI | A web page listing every endpoint where you can try the API by clicking. | Halaman web berisi daftar semua endpoint, tempat mencoba API dengan klik. |
 | ADMIN / STAFF | The two user roles: owner (full access) and employee (sell and receive stock). | Dua peran pengguna: pemilik (akses penuh) dan karyawan (menjual dan menerima stok). |
-| Test | An automatic check that the system behaves correctly. LogiVault has 239. | Pemeriksaan otomatis bahwa sistem bekerja dengan benar. LogiVault punya 239. |
+| Test | An automatic check that the system behaves correctly. LogiVault has 240. | Pemeriksaan otomatis bahwa sistem bekerja dengan benar. LogiVault punya 240. |
 
 *The rest of this document is technical and written for developers. / Bagian selanjutnya bersifat teknis dan ditujukan untuk developer.*
 
@@ -240,7 +248,7 @@ curl http://localhost:8080/actuator/health
 ### Using Swagger UI
 1. Open http://localhost:8080/swagger-ui.html.
 2. Expand **Auth → POST /api/v1/auth/login**, click **Try it out**, send the admin email and password.
-3. Copy `accessToken` from the response, click **Authorize** (top right) and paste it.
+3. Copy `data.accessToken` from the response, click **Authorize** (top right) and paste it.
 4. Every endpoint with a lock icon now sends `Authorization: Bearer <token>`.
 
 ![Swagger UI overview](docs/screenshots/swagger-overview.png)
@@ -284,11 +292,11 @@ curl http://localhost:8080/actuator/health
 |---|---|
 | Stateless JWT access tokens (15 min) plus refresh tokens (7 days). Refresh tokens are stored only as SHA-256 hashes and rotated on every refresh; logout revokes them. | Short-lived access tokens limit damage if leaked; a stolen DB dump does not expose usable refresh tokens. |
 | Two roles: `ADMIN` (catalog, adjustments, users) and `STAFF` (sell, cancel, stock-in, read). ADMIN rules are enforced as URL rules **and** `@PreAuthorize`. | URL rules run before request validation, so STAFF always gets `403`, never a `400` that leaks the request shape. `@PreAuthorize` is a second layer. `RoleMatrixIT` checks every endpoint for every role (117 cases). |
-| Errors use RFC 7807 `ProblemDetail` with an extra stable `code` field (`INSUFFICIENT_STOCK`, `SKU_ALREADY_EXISTS`, ...) and `errors[]` for validation. Security 401/403 return the same shape. | Clients branch on `code`, not on English messages. One error shape everywhere. |
+| Every response uses one envelope: `{ status, message, data }`. Lists add `meta` (paging); errors add a stable `code` (`INSUFFICIENT_STOCK`, `SKU_ALREADY_EXISTS`, ...), plus `errors[]` for validation and `details` for extra context. Security 401/403 return the same shape. Actions without a result return `200` with `data: null` instead of `204`. | Clients parse one shape for every endpoint and branch on `code`, not on English messages. |
 | UUID primary keys. | Ids are not guessable and can be generated without a DB round trip. |
 | Order codes `ORD-YYYYMMDD-NNNN`, numbered per business day in `Asia/Jakarta`, from a counter table. | Human-readable for receipts; per-day counters avoid gaps from sequences. |
 | All timestamps stored in UTC (`Instant`); business dates use `Asia/Jakarta`. Time comes from an injected `Clock`. | Correct "today" boundaries for a shop in Indonesia, and deterministic tests. |
-| One stable paging shape: `content`, `page`, `size`, `totalElements`, `totalPages`; max page size 100. | Does not leak Spring's `Page` JSON, which changes between versions. |
+| Lists put the rows in `data` and paging in `meta` (`page`, `size`, `totalElements`, `totalPages`); max page size 100. | Same envelope as single results, and does not leak Spring's `Page` JSON, which changes between versions. |
 | Package-by-layer (`controller`, `service`, `repository`, `entity`, `dto`, `mapper`, ...) with a feature prefix on class names. | Familiar Spring layout; one feature is still found by name (`Order*`). |
 | Schema managed only by Flyway (`ddl-auto: validate`). MapStruct with `unmappedTargetPolicy=ERROR`. | The schema is reviewed SQL, not guessed by Hibernate. A new field that is not mapped fails the build instead of silently returning `null`. |
 | OpenAPI generated from code (springdoc) with summaries, error responses and examples; Swagger UI only in `dev`. | Docs cannot go stale, and production does not expose the API surface. |
@@ -387,6 +395,19 @@ Base path `/api/v1`. All endpoints except login and refresh require `Authorizati
 
 ## 5. API examples
 
+### Response format
+Every response, success or error, uses the same envelope:
+
+| Field | When | Meaning |
+|---|---|---|
+| `status` | always | HTTP status code, repeated in the body |
+| `message` | always | Short human-readable result, e.g. `Item created`, `Not enough stock` |
+| `data` | always | The result; an object, an array for lists, or `null` for errors and actions without a result |
+| `meta` | lists only | Paging: `page`, `size`, `totalElements`, `totalPages` |
+| `code` | errors only | Stable machine-readable error code, e.g. `INSUFFICIENT_STOCK` |
+| `errors` | validation errors only | Field errors: `[{ "field", "message" }]` |
+| `details` | some errors | Extra context, e.g. the short lines of `INSUFFICIENT_STOCK` |
+
 The examples below are real responses captured from a local run, following the main flow: **login → create item → stock-in → order → insufficient stock → cancel → history**. Ids will differ on your machine.
 
 ```bash
@@ -399,17 +420,22 @@ curl -s -X POST $BASE/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@logivault.local","password":"<LOGIVAULT_ADMIN_PASSWORD>"}'
 ```
+`200 OK`
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-  "refreshToken": "<43-char random token>",
-  "tokenType": "Bearer",
-  "expiresIn": 900,
-  "user": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator", "email": "admin@logivault.local", "role": "ADMIN" }
+  "status": 200,
+  "message": "Login successful",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "refreshToken": "<43-char random token>",
+    "tokenType": "Bearer",
+    "expiresIn": 900,
+    "user": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator", "email": "admin@logivault.local", "role": "ADMIN" }
+  }
 }
 ```
 ```bash
-TOKEN=<accessToken from the response>
+TOKEN=<data.accessToken from the response>
 ```
 
 ### 5.2 Create an item with two variants (ADMIN)
@@ -430,45 +456,49 @@ curl -s -X POST $BASE/items \
 `201 Created`, `Location: /api/v1/items/{id}`
 ```json
 {
-  "id": "ca391308-c63d-4f3e-a0b9-da75baf7e0e6",
-  "name": "Kaos Polos",
-  "description": "Cotton combed 30s",
-  "basePrice": 75000,
-  "active": true,
-  "variants": [
-    {
-      "id": "4e0abfad-61dd-4df6-bf6f-978629368570",
-      "sku": "KAOS-M-HITAM",
-      "name": "M / Hitam",
-      "attributes": { "size": "M", "color": "Hitam" },
-      "price": null,
-      "effectivePrice": 75000,
-      "stock": 0,
-      "minStock": 5,
-      "lowStock": true,
-      "active": true
-    },
-    {
-      "id": "530eb6ad-112c-4734-ad04-a30780843eff",
-      "sku": "KAOS-L-PUTIH",
-      "name": "L / Putih",
-      "attributes": { "size": "L", "color": "Putih" },
-      "price": 80000,
-      "effectivePrice": 80000,
-      "stock": 0,
-      "minStock": 5,
-      "lowStock": true,
-      "active": true
-    }
-  ],
-  "createdAt": "2026-10-01T15:42:50.033969Z",
-  "updatedAt": "2026-10-01T15:42:50.033969Z"
+  "status": 201,
+  "message": "Item created",
+  "data": {
+    "id": "15ac477f-401f-4985-a81e-0101b432bea0",
+    "name": "Kaos Polos",
+    "description": "Cotton combed 30s",
+    "basePrice": 75000,
+    "active": true,
+    "variants": [
+      {
+        "id": "3a60ab72-d210-406e-bd44-a4557fe5d155",
+        "sku": "KAOS-M-HITAM",
+        "name": "M / Hitam",
+        "attributes": { "size": "M", "color": "Hitam" },
+        "price": null,
+        "effectivePrice": 75000,
+        "stock": 0,
+        "minStock": 5,
+        "lowStock": true,
+        "active": true
+      },
+      {
+        "id": "86017dec-e97f-444f-8473-8b41a0bf9c32",
+        "sku": "KAOS-L-PUTIH",
+        "name": "L / Putih",
+        "attributes": { "size": "L", "color": "Putih" },
+        "price": 80000,
+        "effectivePrice": 80000,
+        "stock": 0,
+        "minStock": 5,
+        "lowStock": true,
+        "active": true
+      }
+    ],
+    "createdAt": "2026-10-01T16:40:30.497263Z",
+    "updatedAt": "2026-10-01T16:40:30.497263Z"
+  }
 }
 ```
 
 ### 5.3 Stock-in
 ```bash
-VARIANT=4e0abfad-61dd-4df6-bf6f-978629368570
+VARIANT=3a60ab72-d210-406e-bd44-a4557fe5d155
 curl -s -X POST $BASE/variants/$VARIANT/stock-in \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"qty":50,"note":"Supplier delivery"}'
@@ -476,19 +506,23 @@ curl -s -X POST $BASE/variants/$VARIANT/stock-in \
 `200 OK`
 ```json
 {
-  "variantId": "4e0abfad-61dd-4df6-bf6f-978629368570",
-  "sku": "KAOS-M-HITAM",
-  "stock": 50,
-  "movement": {
-    "id": "5a4a6382-96c7-481d-b95b-f72ebec56ae5",
-    "type": "STOCK_IN",
-    "qty": 50,
-    "stockBefore": 0,
-    "stockAfter": 50,
-    "reason": "Supplier delivery",
-    "orderCode": null,
-    "actor": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator" },
-    "createdAt": "2026-10-01T15:42:50.101524Z"
+  "status": 200,
+  "message": "Stock received",
+  "data": {
+    "variantId": "3a60ab72-d210-406e-bd44-a4557fe5d155",
+    "sku": "KAOS-M-HITAM",
+    "stock": 50,
+    "movement": {
+      "id": "1949b824-c311-453e-a259-abfffb7bd582",
+      "type": "STOCK_IN",
+      "qty": 50,
+      "stockBefore": 0,
+      "stockAfter": 50,
+      "reason": "Supplier delivery",
+      "orderCode": null,
+      "actor": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator" },
+      "createdAt": "2026-10-01T16:40:30.544890Z"
+    }
   }
 }
 ```
@@ -502,29 +536,34 @@ curl -s -X POST $BASE/orders \
 `201 Created`, `Location: /api/v1/orders/{id}`
 ```json
 {
-  "id": "043c4f9f-c0c9-46ee-94dc-20515249187c",
-  "code": "ORD-20261001-0001",
-  "status": "COMPLETED",
-  "total": 150000.0,
-  "note": "Pickup at 3pm",
-  "lines": [
-    {
-      "variantId": "4e0abfad-61dd-4df6-bf6f-978629368570",
-      "sku": "KAOS-M-HITAM",
-      "itemName": "Kaos Polos",
-      "variantName": "M / Hitam",
-      "qty": 2,
-      "unitPrice": 75000.0,
-      "subtotal": 150000.0
-    }
-  ],
-  "createdBy": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator" },
-  "createdAt": "2026-10-01T15:42:50.146207Z",
-  "cancelledBy": null,
-  "cancelledAt": null,
-  "cancelReason": null
+  "status": 201,
+  "message": "Order created",
+  "data": {
+    "id": "1bd78192-4e23-49e9-824b-228048f32e70",
+    "code": "ORD-20261001-0002",
+    "status": "COMPLETED",
+    "total": 150000.0,
+    "note": "Pickup at 3pm",
+    "lines": [
+      {
+        "variantId": "3a60ab72-d210-406e-bd44-a4557fe5d155",
+        "sku": "KAOS-M-HITAM",
+        "itemName": "Kaos Polos",
+        "variantName": "M / Hitam",
+        "qty": 2,
+        "unitPrice": 75000.0,
+        "subtotal": 150000.0
+      }
+    ],
+    "createdBy": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator" },
+    "createdAt": "2026-10-01T16:40:30.594331Z",
+    "cancelledBy": null,
+    "cancelledAt": null,
+    "cancelReason": null
+  }
 }
 ```
+Note that `status` at the top is the HTTP status (`201`), while `data.status` is the order status (`COMPLETED`).
 
 ### 5.5 Order with insufficient stock
 Stock is now 48. Asking for 999 fails, and nothing is deducted.
@@ -536,21 +575,21 @@ curl -s -X POST $BASE/orders \
 `409 Conflict`
 ```json
 {
-  "type": "about:blank",
-  "title": "Conflict",
   "status": 409,
-  "detail": "Not enough stock",
-  "instance": "/api/v1/orders",
+  "message": "Not enough stock",
   "code": "INSUFFICIENT_STOCK",
-  "lines": [
-    { "variantId": "4e0abfad-61dd-4df6-bf6f-978629368570", "sku": "KAOS-M-HITAM", "requested": 999, "available": 48 }
-  ]
+  "data": null,
+  "details": {
+    "lines": [
+      { "variantId": "3a60ab72-d210-406e-bd44-a4557fe5d155", "sku": "KAOS-M-HITAM", "requested": 999, "available": 48 }
+    ]
+  }
 }
 ```
 
 ### 5.6 Cancel the order
 ```bash
-ORDER=043c4f9f-c0c9-46ee-94dc-20515249187c
+ORDER=1bd78192-4e23-49e9-824b-228048f32e70
 curl -s -X POST $BASE/orders/$ORDER/cancel \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"reason":"Customer changed their mind"}'
@@ -558,13 +597,17 @@ curl -s -X POST $BASE/orders/$ORDER/cancel \
 `200 OK` (abridged)
 ```json
 {
-  "id": "043c4f9f-c0c9-46ee-94dc-20515249187c",
-  "code": "ORD-20261001-0001",
-  "status": "CANCELLED",
-  "total": 150000.0,
-  "cancelledBy": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator" },
-  "cancelledAt": "2026-10-01T15:42:50.207276Z",
-  "cancelReason": "Customer changed their mind"
+  "status": 200,
+  "message": "Order cancelled",
+  "data": {
+    "id": "1bd78192-4e23-49e9-824b-228048f32e70",
+    "code": "ORD-20261001-0002",
+    "status": "CANCELLED",
+    "total": 150000.0,
+    "cancelledBy": { "id": "a23cc587-dfa5-4ef3-b62a-86de33ca5469", "name": "Administrator" },
+    "cancelledAt": "2026-10-01T16:40:30.657208Z",
+    "cancelReason": "Customer changed their mind"
+  }
 }
 ```
 
@@ -573,17 +616,17 @@ Newest first. Each row shows who, why, and the stock before and after.
 ```bash
 curl -s "$BASE/variants/$VARIANT/movements?size=5" -H "Authorization: Bearer $TOKEN"
 ```
+`200 OK` (actor ids abridged)
 ```json
 {
-  "content": [
-    { "type": "SALE_CANCEL", "qty": 2,  "stockBefore": 48, "stockAfter": 50, "reason": "Customer changed their mind", "orderCode": "ORD-20261001-0001", "actor": { "name": "Administrator" }, "createdAt": "2026-10-01T15:42:50.213159Z" },
-    { "type": "SALE",        "qty": -2, "stockBefore": 50, "stockAfter": 48, "reason": null,                          "orderCode": "ORD-20261001-0001", "actor": { "name": "Administrator" }, "createdAt": "2026-10-01T15:42:50.147787Z" },
-    { "type": "STOCK_IN",    "qty": 50, "stockBefore": 0,  "stockAfter": 50, "reason": "Supplier delivery",           "orderCode": null,                "actor": { "name": "Administrator" }, "createdAt": "2026-10-01T15:42:50.101524Z" }
+  "status": 200,
+  "message": "Stock movements retrieved",
+  "data": [
+    { "type": "SALE_CANCEL", "qty": 2,  "stockBefore": 48, "stockAfter": 50, "reason": "Customer changed their mind", "orderCode": "ORD-20261001-0002", "actor": { "name": "Administrator" }, "createdAt": "2026-10-01T16:40:30.663947Z" },
+    { "type": "SALE",        "qty": -2, "stockBefore": 50, "stockAfter": 48, "reason": null,                          "orderCode": "ORD-20261001-0002", "actor": { "name": "Administrator" }, "createdAt": "2026-10-01T16:40:30.596116Z" },
+    { "type": "STOCK_IN",    "qty": 50, "stockBefore": 0,  "stockAfter": 50, "reason": "Supplier delivery",           "orderCode": null,                "actor": { "name": "Administrator" }, "createdAt": "2026-10-01T16:40:30.544890Z" }
   ],
-  "page": 0,
-  "size": 5,
-  "totalElements": 3,
-  "totalPages": 1
+  "meta": { "page": 0, "size": 5, "totalElements": 3, "totalPages": 1 }
 }
 ```
 
@@ -591,22 +634,28 @@ curl -s "$BASE/variants/$VARIANT/movements?size=5" -H "Authorization: Bearer $TO
 ```bash
 curl -s "$BASE/stock/low" -H "Authorization: Bearer $TOKEN"
 ```
+`200 OK`
 ```json
 {
-  "content": [
-    { "variantId": "530eb6ad-112c-4734-ad04-a30780843eff", "sku": "KAOS-L-PUTIH", "itemName": "Kaos Polos", "variantName": "L / Putih", "stock": 0, "minStock": 5 }
+  "status": 200,
+  "message": "Low-stock variants retrieved",
+  "data": [
+    { "variantId": "86017dec-e97f-444f-8473-8b41a0bf9c32", "sku": "KAOS-L-PUTIH", "itemName": "Kaos Polos", "variantName": "L / Putih", "stock": 0, "minStock": 5 }
   ],
-  "page": 0,
-  "size": 10,
-  "totalElements": 1,
-  "totalPages": 1
+  "meta": { "page": 0, "size": 10, "totalElements": 1, "totalPages": 1 }
 }
 ```
 
-### 5.9 Error shapes
+### 5.9 Action without a result
+Deactivate, logout, change password and reset password return `200` with `data: null`:
+```json
+{ "status": 200, "message": "Variant deactivated", "data": null }
+```
+
+### 5.10 Error shapes
 No token, `401 Unauthorized`:
 ```json
-{ "type": "about:blank", "title": "Unauthorized", "status": 401, "detail": "Authentication is required", "instance": "/api/v1/items", "code": "UNAUTHORIZED" }
+{ "status": 401, "message": "Authentication is required", "code": "UNAUTHORIZED", "data": null }
 ```
 
 Invalid body, `400 Bad Request`:
@@ -616,15 +665,13 @@ curl -s -X POST $BASE/items -H "Authorization: Bearer $TOKEN" -H 'Content-Type: 
 ```
 ```json
 {
-  "type": "about:blank",
-  "title": "Bad Request",
   "status": 400,
-  "detail": "Request validation failed",
-  "instance": "/api/v1/items",
+  "message": "Request validation failed",
   "code": "VALIDATION_ERROR",
+  "data": null,
   "errors": [
-    { "field": "name", "message": "must not be blank" },
-    { "field": "basePrice", "message": "must be greater than or equal to 0" }
+    { "field": "basePrice", "message": "must be greater than or equal to 0" },
+    { "field": "name", "message": "must not be blank" }
   ]
 }
 ```
@@ -644,7 +691,7 @@ curl -s -X POST $BASE/items -H "Authorization: Bearer $TOKEN" -H 'Content-Type: 
 - `./mvnw verify` fails the build if any `*Service` class drops below 70% line coverage. The HTML report is written to `target/site/jacoco/index.html`.
 
 ### Latest result
-`./mvnw verify` on 2026-10-01: **239 tests, 0 failures, 0 errors, 0 skipped. BUILD SUCCESS. All coverage checks met.**
+`./mvnw clean verify` on 2026-10-01: **240 tests, 0 failures, 0 errors, 0 skipped. BUILD SUCCESS. All coverage checks met.**
 
 | Test class | Tests | What it proves |
 |---|---:|---|
@@ -652,7 +699,7 @@ curl -s -X POST $BASE/items -H "Authorization: Bearer $TOKEN" -H 'Content-Type: 
 | `controller.CreateOrderIT` | 10 | Stock deduction with one SALE movement, price snapshot, insufficient stock changes nothing, STAFF can sell |
 | `controller.UserManagementIT` | 9 | Create, update, deactivate, reset password, self-modification guard |
 | `controller.ItemReadUpdateIT` | 8 | Item list, search, detail, update, deactivate and reactivate |
-| `exception.GlobalExceptionHandlerTest` | 8 | Exception → ProblemDetail mapping and error codes |
+| `exception.GlobalExceptionHandlerTest` | 8 | Exception → error envelope mapping and error codes |
 | `controller.CancelOrderIT` | 6 | Cancel restores stock with a SALE_CANCEL movement, also for inactive variants; STAFF can cancel |
 | `controller.CreateItemIT` | 6 | Item with variants, Default variant, duplicate SKU |
 | `controller.OrderQueryIT` | 6 | Order list filters and detail |
@@ -664,7 +711,7 @@ curl -s -X POST $BASE/items -H "Authorization: Bearer $TOKEN" -H 'Content-Type: 
 | `security.JwtServiceTest` | 5 | Token round trip; rejects expired, wrong-secret and garbage tokens |
 | `controller.UserProfileIT` | 4 | Own profile and password change |
 | `security.SecurityConfigIT` | 4 | Public vs protected endpoints, bad tokens |
-| `config.OpenApiIT` | 3 | All 32 endpoints documented, bearer scheme, public endpoints |
+| `config.OpenApiIT` | 4 | All 32 endpoints documented, bearer scheme, public endpoints, envelope schemas |
 | `controller.LowStockIT` | 3 | Includes stock at `minStock`, most critical first, skips inactive variants and items |
 | `repository.UserRepositoryIT` | 3 | Admin seed, case-insensitive email lookup and uniqueness |
 | `repository.VariantRepositoryIT` | 3 | JSONB attributes round trip, SKU lookup, variant ordering |
@@ -676,7 +723,7 @@ curl -s -X POST $BASE/items -H "Authorization: Bearer $TOKEN" -H 'Content-Type: 
 | `SmokeIT` | 1 | Application context starts, migrations apply |
 | `dto.PageResponseTest` | 1 | Paging shape |
 | `service.LedgerInvariantIT` | 1 | Current stock always equals the sum of the ledger |
-| **Total (28 classes)** | **239** | |
+| **Total (28 classes)** | **240** | |
 
 ### Coverage (JaCoCo)
 Service layer: 96% instructions, 85% branches, 364 of 372 lines covered.

@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * Thrown by services for any expected business failure. Rendered by {@link GlobalExceptionHandler}
- * as a ProblemDetail with {@code code} plus the optional extra {@code properties} (e.g. {@code lines}).
+ * as an error envelope with {@code code}; the optional {@code properties} (e.g. {@code lines}) go to {@code details}.
  */
 @Getter
 public class BusinessException extends RuntimeException {

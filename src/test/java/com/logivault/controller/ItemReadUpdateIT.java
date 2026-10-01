@@ -44,7 +44,7 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/items").param("q", uniqueName.toUpperCase()).header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name").value(uniqueName));
+                .andExpect(jsonPath("$.data[0].name").value(uniqueName));
     }
 
     @Test
@@ -64,8 +64,8 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/items").param("q", "Stock Sum Item").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].variantCount").value(2))
-                .andExpect(jsonPath("$.content[0].totalStock").value(10));
+                .andExpect(jsonPath("$.data[0].variantCount").value(2))
+                .andExpect(jsonPath("$.data[0].totalStock").value(10));
     }
 
     @Test
@@ -82,8 +82,8 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
                         .content(objectMapper.writeValueAsString(
                                 new UpdateItemRequest("Repriceable Item", "updated", new BigDecimal("70000.00")))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.basePrice").value(70000.00))
-                .andExpect(jsonPath("$.variants[0].effectivePrice").value(70000.00));
+                .andExpect(jsonPath("$.data.basePrice").value(70000.00))
+                .andExpect(jsonPath("$.data.variants[0].effectivePrice").value(70000.00));
     }
 
     @Test
@@ -135,11 +135,11 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateVariantRequest(newSku, "New Variant", null, null, null))))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.sku").value(newSku));
+                .andExpect(jsonPath("$.data.sku").value(newSku));
 
         mockMvc.perform(get("/api/v1/items/" + itemId + "/variants").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.data.length()").value(2));
     }
 
     @Test
@@ -149,15 +149,15 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
         UUID itemId = UUID.fromString(created.get("id").asText());
 
         mockMvc.perform(delete("/api/v1/items/" + itemId).header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/items/" + itemId).header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(false));
+                .andExpect(jsonPath("$.data.active").value(false));
 
         mockMvc.perform(patch("/api/v1/items/" + itemId + "/activate").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.data.active").value(true));
     }
 
     @Test
@@ -184,7 +184,7 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
         String body = mockMvc.perform(postItem(request, accessToken))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(body);
+        return objectMapper.readTree(body).get("data");
     }
 
     private MockHttpServletRequestBuilder postItem(CreateItemRequest request, String accessToken) throws Exception {

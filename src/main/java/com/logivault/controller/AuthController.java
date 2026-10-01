@@ -1,5 +1,6 @@
 package com.logivault.controller;
 
+import com.logivault.dto.WebResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -32,8 +33,8 @@ public class AuthController {
     @ApiResponse(responseCode = "429", description = "TOO_MANY_ATTEMPTS")
     @SecurityRequirements
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<WebResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
+        return WebResponse.ok("Login successful", authService.login(request));
     }
 
     @Operation(summary = "Exchange a refresh token for a new token pair")
@@ -41,15 +42,15 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "INVALID_REFRESH_TOKEN")
     @SecurityRequirements
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        return ResponseEntity.ok(authService.refresh(request));
+    public ResponseEntity<WebResponse<TokenResponse>> refresh(@Valid @RequestBody RefreshRequest request) {
+        return WebResponse.ok("Token refreshed", authService.refresh(request));
     }
 
     @Operation(summary = "Revoke a refresh token")
-    @ApiResponse(responseCode = "204", description = "Token revoked")
+    @ApiResponse(responseCode = "200", description = "Token revoked")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
+    public ResponseEntity<WebResponse<Void>> logout(@Valid @RequestBody RefreshRequest request) {
         authService.logout(request);
-        return ResponseEntity.noContent().build();
+        return WebResponse.ok("Logged out");
     }
 }

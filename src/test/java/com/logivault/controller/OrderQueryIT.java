@@ -46,9 +46,9 @@ class OrderQueryIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/orders?createdBy=" + staffUser.getId()).header("Authorization", "Bearer " + admin))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].createdBy.id").value(staffUser.getId().toString()))
-                .andExpect(jsonPath("$.content[0].createdBy.name").isNotEmpty());
+                .andExpect(jsonPath("$.meta.totalElements").value(1))
+                .andExpect(jsonPath("$.data[0].createdBy.id").value(staffUser.getId().toString()))
+                .andExpect(jsonPath("$.data[0].createdBy.name").isNotEmpty());
     }
 
     @Test
@@ -68,14 +68,14 @@ class OrderQueryIT extends AbstractIntegrationTest {
         String base = "/api/v1/orders?createdBy=" + me;
 
         mockMvc.perform(get(base + "&status=CANCELLED").header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(cancelled))
-                .andExpect(jsonPath("$.content[0].itemCount").value(1));
+                .andExpect(jsonPath("$.meta.totalElements").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(cancelled))
+                .andExpect(jsonPath("$.data[0].itemCount").value(1));
 
         mockMvc.perform(get(base + "&status=COMPLETED").header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(twoLines))
-                .andExpect(jsonPath("$.content[0].itemCount").value(2));
+                .andExpect(jsonPath("$.meta.totalElements").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(twoLines))
+                .andExpect(jsonPath("$.data[0].itemCount").value(2));
     }
 
     @Test
@@ -88,11 +88,11 @@ class OrderQueryIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/orders?createdBy=" + me + "&from=" + today + "&to=" + today)
                         .header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.meta.totalElements").value(1));
 
         mockMvc.perform(get("/api/v1/orders?createdBy=" + me + "&to=" + today.minusDays(1))
                         .header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(0));
+                .andExpect(jsonPath("$.meta.totalElements").value(0));
 
         mockMvc.perform(get("/api/v1/orders?from=" + today.plusDays(1) + "&to=" + today)
                         .header("Authorization", "Bearer " + admin))
@@ -113,12 +113,12 @@ class OrderQueryIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/orders/" + orderId).header("Authorization", "Bearer " + admin))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.cancelReason").value("wrong item"))
-                .andExpect(jsonPath("$.cancelledBy.id").isNotEmpty())
-                .andExpect(jsonPath("$.cancelledAt").isNotEmpty())
-                .andExpect(jsonPath("$.lines[0].sku").isNotEmpty())
-                .andExpect(jsonPath("$.lines[0].itemName").value("Fixture Item"));
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.cancelReason").value("wrong item"))
+                .andExpect(jsonPath("$.data.cancelledBy.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.cancelledAt").isNotEmpty())
+                .andExpect(jsonPath("$.data.lines[0].sku").isNotEmpty())
+                .andExpect(jsonPath("$.data.lines[0].itemName").value("Fixture Item"));
     }
 
     @Test
@@ -146,7 +146,7 @@ class OrderQueryIT extends AbstractIntegrationTest {
                         .content(objectMapper.writeValueAsString(Map.of("lines", lines))))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode created = objectMapper.readTree(body);
+        JsonNode created = objectMapper.readTree(body).get("data");
         return created.get("id").asText();
     }
 }

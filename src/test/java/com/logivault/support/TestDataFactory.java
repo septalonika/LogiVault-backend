@@ -54,7 +54,7 @@ public class TestDataFactory {
                         .content(objectMapper.writeValueAsString(new LoginBody(email, rawPassword))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(body);
+        return objectMapper.readTree(body).get("data");
     }
 
     public String accessTokenFor(User user, String rawPassword) throws Exception {
@@ -75,7 +75,7 @@ public class TestDataFactory {
                         .content(objectMapper.writeValueAsString(item)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        UUID variantId = UUID.fromString(objectMapper.readTree(body).get("variants").get(0).get("id").asText());
+        UUID variantId = UUID.fromString(objectMapper.readTree(body).get("data").get("variants").get(0).get("id").asText());
         if (stock > 0) {
             stockIn(adminToken, variantId, stock);
         }

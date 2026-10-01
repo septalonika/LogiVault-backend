@@ -37,12 +37,12 @@ class StockInAdjustIT extends AbstractIntegrationTest {
 
         mockMvc.perform(stockInRequest(variantId, 20, "Supplier delivery", adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.stock").value(20))
-                .andExpect(jsonPath("$.movement.type").value("STOCK_IN"))
-                .andExpect(jsonPath("$.movement.qty").value(20))
-                .andExpect(jsonPath("$.movement.stockBefore").value(0))
-                .andExpect(jsonPath("$.movement.stockAfter").value(20))
-                .andExpect(jsonPath("$.movement.actor.id").isNotEmpty());
+                .andExpect(jsonPath("$.data.stock").value(20))
+                .andExpect(jsonPath("$.data.movement.type").value("STOCK_IN"))
+                .andExpect(jsonPath("$.data.movement.qty").value(20))
+                .andExpect(jsonPath("$.data.movement.stockBefore").value(0))
+                .andExpect(jsonPath("$.data.movement.stockAfter").value(20))
+                .andExpect(jsonPath("$.data.movement.actor.id").isNotEmpty());
     }
 
     @Test
@@ -103,11 +103,11 @@ class StockInAdjustIT extends AbstractIntegrationTest {
         String adminToken = adminAccessToken();
         UUID variantId = createVariant(adminToken);
         mockMvc.perform(delete("/api/v1/variants/" + variantId).header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(stockInRequest(variantId, 3, "late delivery", adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.stock").value(3));
+                .andExpect(jsonPath("$.data.stock").value(3));
     }
 
     private String adminAccessToken() throws Exception {
@@ -121,7 +121,7 @@ class StockInAdjustIT extends AbstractIntegrationTest {
         String body = mockMvc.perform(postItem(request, adminToken))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode created = objectMapper.readTree(body);
+        JsonNode created = objectMapper.readTree(body).get("data");
         return UUID.fromString(created.get("variants").get(0).get("id").asText());
     }
 

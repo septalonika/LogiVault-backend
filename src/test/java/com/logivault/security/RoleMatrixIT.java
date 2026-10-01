@@ -115,7 +115,7 @@ class RoleMatrixIT extends AbstractIntegrationTest {
             assertThat(rejectedBySecurity(response)).as("public endpoint must not be blocked").isFalse();
         } else {
             assertThat(response.getStatus()).isEqualTo(401);
-            assertProblemWithCode(response, "UNAUTHORIZED");
+            assertErrorWithCode(response, "UNAUTHORIZED");
         }
     }
 
@@ -126,7 +126,7 @@ class RoleMatrixIT extends AbstractIntegrationTest {
 
         if (endpoint.access() == Access.ADMIN) {
             assertThat(response.getStatus()).isEqualTo(403);
-            assertProblemWithCode(response, "FORBIDDEN");
+            assertErrorWithCode(response, "FORBIDDEN");
         } else {
             assertThat(rejectedBySecurity(response)).as("STAFF is allowed here").isFalse();
         }
@@ -142,7 +142,7 @@ class RoleMatrixIT extends AbstractIntegrationTest {
         MockHttpServletResponse response = call(emptyBody, staffToken);
 
         assertThat(response.getStatus()).isEqualTo(403);
-        assertProblemWithCode(response, "FORBIDDEN");
+        assertErrorWithCode(response, "FORBIDDEN");
     }
 
     @ParameterizedTest(name = "{0}")
@@ -171,9 +171,11 @@ class RoleMatrixIT extends AbstractIntegrationTest {
         return "UNAUTHORIZED".equals(code) || "FORBIDDEN".equals(code);
     }
 
-    private void assertProblemWithCode(MockHttpServletResponse response, String expectedCode) throws Exception {
-        assertThat(response.getContentType()).contains("application/problem+json");
+    private void assertErrorWithCode(MockHttpServletResponse response, String expectedCode) throws Exception {
+        assertThat(response.getContentType()).contains("application/json");
         assertThat(codeOf(response)).isEqualTo(expectedCode);
+        assertThat(objectMapper.readTree(response.getContentAsString()).get("status").asInt())
+                .isEqualTo(response.getStatus());
     }
 
     private String codeOf(MockHttpServletResponse response) throws Exception {
