@@ -12,6 +12,8 @@
 *.zip
 *.tar.gz
 *.rar
+# Maven wrapper jar must stay committed if the wrapper ever switches from "only-script"
+!.mvn/wrapper/maven-wrapper.jar
 
 # Build directories
 target/
@@ -28,5 +30,7 @@ build/
 
 # Environment & Secret files
 .env
+.env.*
+!.env.example
 *.key
 *.pem

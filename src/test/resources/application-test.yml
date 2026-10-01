@@ -1,0 +1,13 @@
+# Datasource comes from Testcontainers (@ServiceConnection), see AbstractIntegrationTest
+logivault:
+  jwt:
+    # Base64 of "jwt-secret-for-logivault-be-9999" (32 bytes, HS256 minimum); test-only secret
+    secret: and0LXNlY3JldC1mb3ItbG9naXZhdWx0LWJlLTk5OTk=
+  admin:
+    email: admin@logivault.test
+    password: Admin12345!
+
+logging:
+  level:
+    com.logivault: INFO
+    org.hibernate.SQL: WARN
