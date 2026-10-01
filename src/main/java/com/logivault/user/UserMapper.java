@@ -1,5 +1,6 @@
 package com.logivault.user;
 
+import com.logivault.user.dto.UserResponse;
 import com.logivault.user.dto.UserSummary;
 import org.mapstruct.Mapper;
 
@@ -7,4 +8,6 @@ import org.mapstruct.Mapper;
 public interface UserMapper {
 
     UserSummary toSummary(User user);
+
+    UserResponse toResponse(User user);
 }
