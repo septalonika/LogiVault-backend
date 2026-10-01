@@ -1,6 +1,6 @@
 package com.logivault.order;
 
-import com.logivault.common.config.LogiVaultProperties;
+import com.logivault.config.LogiVaultProperties;
 import com.logivault.support.AbstractIntegrationTest;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;

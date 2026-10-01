@@ -1,4 +1,4 @@
-package com.logivault.common.config;
+package com.logivault.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;

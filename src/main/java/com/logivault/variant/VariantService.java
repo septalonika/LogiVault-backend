@@ -1,7 +1,7 @@
 package com.logivault.variant;
 
-import com.logivault.common.exception.BusinessException;
-import com.logivault.common.exception.ErrorCode;
+import com.logivault.exception.BusinessException;
+import com.logivault.exception.ErrorCode;
 import com.logivault.item.Item;
 import com.logivault.item.ItemRepository;
 import com.logivault.stock.StockMovementRepository;

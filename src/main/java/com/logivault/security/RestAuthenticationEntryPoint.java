@@ -1,7 +1,7 @@
-package com.logivault.common.security;
+package com.logivault.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.logivault.common.exception.ErrorCode;
+import com.logivault.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;

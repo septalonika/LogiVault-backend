@@ -1,9 +1,9 @@
-package com.logivault.common.config;
+package com.logivault.config;
 
-import com.logivault.common.security.JwtAuthenticationFilter;
-import com.logivault.common.security.JwtService;
-import com.logivault.common.security.RestAccessDeniedHandler;
-import com.logivault.common.security.RestAuthenticationEntryPoint;
+import com.logivault.security.JwtAuthenticationFilter;
+import com.logivault.security.JwtService;
+import com.logivault.security.RestAccessDeniedHandler;
+import com.logivault.security.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

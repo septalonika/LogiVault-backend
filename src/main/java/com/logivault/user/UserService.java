@@ -1,10 +1,10 @@
 package com.logivault.user;
 
 import com.logivault.auth.RefreshTokenRepository;
-import com.logivault.common.exception.BusinessException;
-import com.logivault.common.exception.ErrorCode;
-import com.logivault.common.security.CurrentUser;
-import com.logivault.common.web.PageResponse;
+import com.logivault.exception.BusinessException;
+import com.logivault.exception.ErrorCode;
+import com.logivault.security.CurrentUser;
+import com.logivault.dto.PageResponse;
 import com.logivault.user.dto.ChangePasswordRequest;
 import com.logivault.user.dto.CreateUserRequest;
 import com.logivault.user.dto.ResetPasswordRequest;

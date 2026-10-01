@@ -1,10 +1,10 @@
 package com.logivault.stock;
 
-import com.logivault.common.config.LogiVaultProperties;
-import com.logivault.common.exception.BusinessException;
-import com.logivault.common.exception.ErrorCode;
-import com.logivault.common.security.CurrentUser;
-import com.logivault.common.web.PageResponse;
+import com.logivault.config.LogiVaultProperties;
+import com.logivault.exception.BusinessException;
+import com.logivault.exception.ErrorCode;
+import com.logivault.security.CurrentUser;
+import com.logivault.dto.PageResponse;
 import com.logivault.order.Order;
 import com.logivault.stock.dto.AdjustStockRequest;
 import com.logivault.stock.dto.LowStockResponse;

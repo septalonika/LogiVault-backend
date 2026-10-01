@@ -1,4 +1,4 @@
-package com.logivault.common.web;
+package com.logivault.dto;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;

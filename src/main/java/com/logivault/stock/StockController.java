@@ -1,6 +1,6 @@
 package com.logivault.stock;
 
-import com.logivault.common.web.PageResponse;
+import com.logivault.dto.PageResponse;
 import com.logivault.stock.dto.AdjustStockRequest;
 import com.logivault.stock.dto.LowStockResponse;
 import com.logivault.stock.dto.MovementResponse;

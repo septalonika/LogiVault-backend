@@ -1,6 +1,6 @@
 package com.logivault.order;
 
-import com.logivault.common.config.LogiVaultProperties;
+import com.logivault.config.LogiVaultProperties;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;

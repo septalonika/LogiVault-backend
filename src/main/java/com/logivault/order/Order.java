@@ -1,8 +1,8 @@
 package com.logivault.order;
 
-import com.logivault.common.entity.BaseEntity;
-import com.logivault.common.exception.BusinessException;
-import com.logivault.common.exception.ErrorCode;
+import com.logivault.entity.BaseEntity;
+import com.logivault.exception.BusinessException;
+import com.logivault.exception.ErrorCode;
 import com.logivault.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

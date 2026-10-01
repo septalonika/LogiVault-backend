@@ -1,8 +1,8 @@
 package com.logivault.stock;
 
-import com.logivault.common.exception.BusinessException;
-import com.logivault.common.exception.ErrorCode;
-import com.logivault.common.config.LogiVaultProperties;
+import com.logivault.exception.BusinessException;
+import com.logivault.exception.ErrorCode;
+import com.logivault.config.LogiVaultProperties;
 import com.logivault.item.Item;
 import com.logivault.user.Role;
 import com.logivault.user.User;
