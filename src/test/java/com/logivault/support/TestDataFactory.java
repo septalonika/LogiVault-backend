@@ -10,6 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -56,6 +59,35 @@ public class TestDataFactory {
 
     public String accessTokenFor(User user, String rawPassword) throws Exception {
         return loginAs(user.getEmail(), rawPassword).get("accessToken").asText();
+    }
+
+    public String loginToken(Role role, String rawPassword) throws Exception {
+        return accessTokenFor(createUser(role, rawPassword), rawPassword);
+    }
+
+    // Creates an item with one variant and stocks it in, all through the API.
+    public UUID createVariantWithStock(String adminToken, int stock) throws Exception {
+        Map<String, Object> item = Map.of("name", "Fixture Item", "basePrice", BigDecimal.TEN,
+                "variants", List.of(Map.of("sku", "SKU-" + UUID.randomUUID(), "name", "V")));
+        String body = mockMvc.perform(post("/api/v1/items")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(item)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID variantId = UUID.fromString(objectMapper.readTree(body).get("variants").get(0).get("id").asText());
+        if (stock > 0) {
+            stockIn(adminToken, variantId, stock);
+        }
+        return variantId;
+    }
+
+    public void stockIn(String token, UUID variantId, int qty) throws Exception {
+        mockMvc.perform(post("/api/v1/variants/" + variantId + "/stock-in")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("qty", qty, "note", "fixture"))))
+                .andExpect(status().isOk());
     }
 
     private record LoginBody(String email, String password) {
