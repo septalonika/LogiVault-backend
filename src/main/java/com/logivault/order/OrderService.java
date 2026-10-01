@@ -2,23 +2,30 @@ package com.logivault.order;
 
 import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
+import com.logivault.common.config.LogiVaultProperties;
 import com.logivault.common.security.CurrentUser;
+import com.logivault.common.web.PageResponse;
 import com.logivault.order.dto.CancelOrderRequest;
 import com.logivault.order.dto.CreateOrderRequest;
 import com.logivault.order.dto.OrderLineRequest;
 import com.logivault.order.dto.OrderResponse;
+import com.logivault.order.dto.OrderSummary;
 import com.logivault.stock.MovementType;
 import com.logivault.stock.StockService;
 import com.logivault.user.User;
 import com.logivault.user.UserRepository;
 import com.logivault.variant.Variant;
 import com.logivault.variant.VariantRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,10 +45,12 @@ public class OrderService {
     private final OrderCodeGenerator codeGenerator;
     private final OrderMapper orderMapper;
     private final Clock clock;
+    private final LogiVaultProperties properties;
 
     public OrderService(OrderRepository orderRepository, VariantRepository variantRepository,
                          UserRepository userRepository, StockService stockService,
-                         OrderCodeGenerator codeGenerator, OrderMapper orderMapper, Clock clock) {
+                         OrderCodeGenerator codeGenerator, OrderMapper orderMapper, Clock clock,
+                         LogiVaultProperties properties) {
         this.orderRepository = orderRepository;
         this.variantRepository = variantRepository;
         this.userRepository = userRepository;
@@ -49,6 +58,7 @@ public class OrderService {
         this.codeGenerator = codeGenerator;
         this.orderMapper = orderMapper;
         this.clock = clock;
+        this.properties = properties;
     }
 
     @Transactional
@@ -112,6 +122,35 @@ public class OrderService {
                     item.getQty(), request.reason(), order, actor);
         }
         return orderMapper.toResponse(order);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OrderSummary> list(OrderStatus status, LocalDate from, LocalDate to, UUID createdBy,
+                                            Pageable pageable) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "from must not be after to");
+        }
+        var zone = properties.businessZone();
+        Instant fromInstant = from == null ? null : from.atStartOfDay(zone).toInstant();
+        Instant toExclusive = to == null ? null : to.plusDays(1).atStartOfDay(zone).toInstant();
+
+        Specification<Order> spec = Specification.where(OrderSpecifications.withCreator())
+                .and(OrderSpecifications.hasStatus(status))
+                .and(OrderSpecifications.createdAtOrAfter(fromInstant))
+                .and(OrderSpecifications.createdBefore(toExclusive))
+                .and(OrderSpecifications.createdBy(createdBy));
+        Page<Order> page = orderRepository.findAll(spec, pageable);
+
+        Map<UUID, Integer> lineCounts = orderRepository
+                .countLines(page.getContent().stream().map(Order::getId).toList()).stream()
+                .collect(Collectors.toMap(OrderRepository.LineCount::getOrderId, c -> (int) c.getLineCount()));
+        return PageResponse.from(page, order -> orderMapper.toSummary(order, lineCounts.getOrDefault(order.getId(), 0)));
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getById(UUID id) {
+        return orderMapper.toResponse(orderRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND)));
     }
 
     private void requireDistinctVariants(List<OrderLineRequest> lines) {

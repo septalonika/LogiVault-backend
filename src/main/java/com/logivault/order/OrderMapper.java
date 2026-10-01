@@ -2,6 +2,7 @@ package com.logivault.order;
 
 import com.logivault.order.dto.OrderLineResponse;
 import com.logivault.order.dto.OrderResponse;
+import com.logivault.order.dto.OrderSummary;
 import com.logivault.user.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -17,6 +18,9 @@ public interface OrderMapper {
     @Mapping(target = "itemName", source = "variant.item.name")
     @Mapping(target = "variantName", source = "variant.name")
     OrderLineResponse toLine(OrderItem item);
+
+    @Mapping(target = "itemCount", source = "itemCount")
+    OrderSummary toSummary(Order order, int itemCount);
 
     OrderResponse.OrderActor toActor(User user);
 }
