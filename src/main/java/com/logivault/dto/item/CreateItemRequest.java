@@ -1,5 +1,6 @@
 package com.logivault.dto.item;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.logivault.dto.variant.CreateVariantRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
@@ -12,9 +13,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateItemRequest(
-        @NotBlank @Size(max = 150) String name,
-        String description,
-        @NotNull @PositiveOrZero @Digits(integer = 12, fraction = 2) BigDecimal basePrice,
+        @Schema(example = "Kaos Polos") @NotBlank @Size(max = 150) String name,
+        @Schema(example = "Cotton combed 30s") String description,
+        @Schema(example = "75000.00") @NotNull @PositiveOrZero @Digits(integer = 12, fraction = 2) BigDecimal basePrice,
         @Valid List<CreateVariantRequest> variants
 ) {
 }
