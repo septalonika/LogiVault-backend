@@ -1,4 +1,4 @@
-package com.logivault.stock.dto;
+package com.logivault.dto.stock;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

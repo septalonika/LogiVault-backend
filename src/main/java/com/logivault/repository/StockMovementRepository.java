@@ -1,5 +1,7 @@
-package com.logivault.stock;
+package com.logivault.repository;
 
+import com.logivault.entity.MovementType;
+import com.logivault.entity.StockMovement;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
