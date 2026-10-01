@@ -1,9 +1,12 @@
 package com.logivault.stock;
 
+import com.logivault.common.config.LogiVaultProperties;
 import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
 import com.logivault.common.security.CurrentUser;
+import com.logivault.common.web.PageResponse;
 import com.logivault.stock.dto.AdjustStockRequest;
+import com.logivault.stock.dto.MovementResponse;
 import com.logivault.stock.dto.StockChangeResponse;
 import com.logivault.stock.dto.StockInRequest;
 import com.logivault.user.User;
@@ -11,12 +14,16 @@ import com.logivault.user.UserRepository;
 import com.logivault.variant.Variant;
 import com.logivault.variant.VariantRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,14 +35,17 @@ public class StockService {
     private final VariantRepository variantRepository;
     private final UserRepository userRepository;
     private final StockMovementMapper stockMovementMapper;
+    private final LogiVaultProperties properties;
     private final Clock clock;
 
     public StockService(StockMovementRepository stockMovementRepository, VariantRepository variantRepository,
-                         UserRepository userRepository, StockMovementMapper stockMovementMapper, Clock clock) {
+                         UserRepository userRepository, StockMovementMapper stockMovementMapper,
+                         LogiVaultProperties properties, Clock clock) {
         this.stockMovementRepository = stockMovementRepository;
         this.variantRepository = variantRepository;
         this.userRepository = userRepository;
         this.stockMovementMapper = stockMovementMapper;
+        this.properties = properties;
         this.clock = clock;
     }
 
@@ -73,6 +83,27 @@ public class StockService {
         Variant variant = lockOrThrow(variantId);
         StockMovement movement = applyMovement(variant, MovementType.ADJUSTMENT, request.delta(), request.reason(), null, currentActor());
         return toChangeResponse(variant, movement);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<MovementResponse> history(UUID variantId, MovementType type, LocalDate from, LocalDate to,
+                                                   Pageable pageable) {
+        if (!variantRepository.existsById(variantId)) {
+            throw new BusinessException(ErrorCode.VARIANT_NOT_FOUND);
+        }
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "from must not be after to");
+        }
+
+        var zone = properties.businessZone();
+        Instant fromInstant = from == null ? null : from.atStartOfDay(zone).toInstant();
+        Instant toExclusive = to == null ? null : to.plusDays(1).atStartOfDay(zone).toInstant();
+
+        // Sort is fixed to newest-first; the client's own sort request (if any) is ignored here.
+        Pageable fixedSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<StockMovement> page = stockMovementRepository.findHistory(variantId,
+                type != null, type, fromInstant != null, fromInstant, toExclusive != null, toExclusive, fixedSort);
+        return PageResponse.from(page, stockMovementMapper::toResponse);
     }
 
     private Variant lockOrThrow(UUID variantId) {

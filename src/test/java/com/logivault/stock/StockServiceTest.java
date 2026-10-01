@@ -2,6 +2,7 @@ package com.logivault.stock;
 
 import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
+import com.logivault.common.config.LogiVaultProperties;
 import com.logivault.item.Item;
 import com.logivault.user.Role;
 import com.logivault.user.User;
@@ -28,7 +29,8 @@ class StockServiceTest {
     private final StockMovementRepository stockMovementRepository = mock(StockMovementRepository.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
     private final StockService stockService = new StockService(stockMovementRepository,
-            mock(VariantRepository.class), mock(UserRepository.class), mock(StockMovementMapper.class), clock);
+            mock(VariantRepository.class), mock(UserRepository.class), mock(StockMovementMapper.class),
+            mock(LogiVaultProperties.class), clock);
 
     @Test
     void applyMovement_withEnoughStock_updatesVariantAndSavesMovement() {
