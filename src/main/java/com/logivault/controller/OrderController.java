@@ -1,5 +1,8 @@
 package com.logivault.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.logivault.dto.PageResponse;
 import com.logivault.dto.order.CancelOrderRequest;
 import com.logivault.dto.order.CreateOrderRequest;
@@ -26,6 +29,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.UUID;
 
+@Tag(name = "Orders", description = "Sales orders with all-or-nothing stock deduction")
 @RestController
 @RequestMapping("/api/v1/orders")
 public class OrderController {
@@ -36,6 +40,11 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    @Operation(summary = "Create an order and deduct stock")
+    @ApiResponse(responseCode = "201", description = "Created")
+    @ApiResponse(responseCode = "404", description = "VARIANT_NOT_FOUND")
+    @ApiResponse(responseCode = "409", description = "INSUFFICIENT_STOCK, nothing is deducted")
+    @ApiResponse(responseCode = "422", description = "VARIANT_INACTIVE")
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
@@ -43,12 +52,18 @@ public class OrderController {
         return ResponseEntity.created(URI.create("/api/v1/orders/" + response.id())).body(response);
     }
 
+    @Operation(summary = "Cancel an order and restore stock")
+    @ApiResponse(responseCode = "200", description = "Cancelled")
+    @ApiResponse(responseCode = "404", description = "ORDER_NOT_FOUND")
+    @ApiResponse(responseCode = "409", description = "INVALID_ORDER_STATUS")
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<OrderResponse> cancel(@PathVariable UUID id, @Valid @RequestBody CancelOrderRequest request) {
         return ResponseEntity.ok(orderService.cancel(id, request));
     }
 
+    @Operation(summary = "List orders")
+    @ApiResponse(responseCode = "200", description = "Page of orders")
     @GetMapping
     public PageResponse<OrderSummary> list(@RequestParam(required = false) OrderStatus status,
                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -58,6 +73,9 @@ public class OrderController {
         return orderService.list(status, from, to, createdBy, pageable);
     }
 
+    @Operation(summary = "Get an order with its lines")
+    @ApiResponse(responseCode = "200", description = "Order")
+    @ApiResponse(responseCode = "404", description = "ORDER_NOT_FOUND")
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(orderService.getById(id));
