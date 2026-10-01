@@ -27,6 +27,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration,classpath:com/logivault/db/migration
+    placeholders:
+      adminEmail: ${logivault.admin.email}
+      adminPassword: ${logivault.admin.password}
   data:
     web:
       pageable:
