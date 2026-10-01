@@ -1,4 +1,4 @@
-package com.logivault.order;
+package com.logivault.service;
 
 import com.logivault.config.LogiVaultProperties;
 import com.logivault.support.AbstractIntegrationTest;

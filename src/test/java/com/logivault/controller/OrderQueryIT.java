@@ -1,4 +1,4 @@
-package com.logivault.order;
+package com.logivault.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,5 +1,6 @@
-package com.logivault.order;
+package com.logivault.repository;
 
+import com.logivault.entity.Order;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package com.logivault.order;
+package com.logivault.entity;
 
 import com.logivault.entity.Variant;
 import jakarta.persistence.Column;

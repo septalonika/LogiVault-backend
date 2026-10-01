@@ -1,4 +1,4 @@
-package com.logivault.order;
+package com.logivault.entity;
 
 public enum OrderStatus {
     COMPLETED,

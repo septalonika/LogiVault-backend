@@ -1,4 +1,4 @@
-package com.logivault.order;
+package com.logivault.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logivault.entity.Role;

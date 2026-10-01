@@ -1,6 +1,6 @@
-package com.logivault.order.dto;
+package com.logivault.dto.order;
 
-import com.logivault.order.OrderStatus;
+import com.logivault.entity.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
