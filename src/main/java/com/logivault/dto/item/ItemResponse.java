@@ -1,6 +1,6 @@
-package com.logivault.item.dto;
+package com.logivault.dto.item;
 
-import com.logivault.variant.dto.VariantResponse;
+import com.logivault.dto.variant.VariantResponse;
 
 import java.math.BigDecimal;
 import java.time.Instant;

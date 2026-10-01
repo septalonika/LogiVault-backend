@@ -1,5 +1,6 @@
-package com.logivault.variant;
+package com.logivault.repository;
 
+import com.logivault.entity.Variant;
 import com.logivault.stock.dto.LowStockResponse;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;

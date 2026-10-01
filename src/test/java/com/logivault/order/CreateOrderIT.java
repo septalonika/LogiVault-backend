@@ -2,14 +2,14 @@ package com.logivault.order;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logivault.dto.item.CreateItemRequest;
+import com.logivault.dto.variant.CreateVariantRequest;
 import com.logivault.entity.Role;
 import com.logivault.entity.User;
-import com.logivault.item.dto.CreateItemRequest;
 import com.logivault.order.dto.CreateOrderRequest;
 import com.logivault.order.dto.OrderLineRequest;
 import com.logivault.stock.dto.StockInRequest;
 import com.logivault.support.AbstractIntegrationTest;
-import com.logivault.variant.dto.CreateVariantRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

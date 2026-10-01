@@ -1,14 +1,18 @@
-package com.logivault.variant;
+package com.logivault.service;
 
+import com.logivault.dto.variant.CreateVariantRequest;
+import com.logivault.dto.variant.UpdateVariantRequest;
+import com.logivault.dto.variant.VariantDetailResponse;
+import com.logivault.dto.variant.VariantResponse;
+import com.logivault.entity.Item;
+import com.logivault.entity.Variant;
 import com.logivault.exception.BusinessException;
 import com.logivault.exception.ErrorCode;
-import com.logivault.item.Item;
-import com.logivault.item.ItemRepository;
+import com.logivault.mapper.VariantMapper;
+import com.logivault.repository.ItemRepository;
+import com.logivault.repository.VariantRepository;
 import com.logivault.stock.StockMovementRepository;
-import com.logivault.variant.dto.CreateVariantRequest;
-import com.logivault.variant.dto.UpdateVariantRequest;
-import com.logivault.variant.dto.VariantDetailResponse;
-import com.logivault.variant.dto.VariantResponse;
+import com.logivault.util.SkuNormalizer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

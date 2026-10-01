@@ -1,6 +1,7 @@
-package com.logivault.item;
+package com.logivault.repository;
 
-import com.logivault.item.dto.ItemSummary;
+import com.logivault.dto.item.ItemSummary;
+import com.logivault.entity.Item;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -17,7 +18,7 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
     Optional<Item> findWithVariantsById(UUID id);
 
     @Query(value = """
-            select new com.logivault.item.dto.ItemSummary(
+            select new com.logivault.dto.item.ItemSummary(
                 i.id, i.name, i.basePrice, i.active, count(v.id), coalesce(sum(v.stock), 0L), i.createdAt)
             from Item i left join i.variants v
             where (:q is null or lower(i.name) like :q)

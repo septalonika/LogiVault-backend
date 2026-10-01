@@ -1,15 +1,17 @@
-package com.logivault.variant;
+package com.logivault.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logivault.dto.item.CreateItemRequest;
+import com.logivault.dto.variant.CreateVariantRequest;
+import com.logivault.dto.variant.UpdateVariantRequest;
 import com.logivault.entity.Role;
 import com.logivault.entity.User;
-import com.logivault.item.dto.CreateItemRequest;
+import com.logivault.entity.Variant;
+import com.logivault.repository.VariantRepository;
 import com.logivault.stock.MovementType;
 import com.logivault.stock.StockService;
 import com.logivault.support.AbstractIntegrationTest;
-import com.logivault.variant.dto.CreateVariantRequest;
-import com.logivault.variant.dto.UpdateVariantRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

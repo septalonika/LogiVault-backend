@@ -1,4 +1,4 @@
-package com.logivault.item.dto;
+package com.logivault.dto.item;
 
 import java.math.BigDecimal;
 import java.time.Instant;

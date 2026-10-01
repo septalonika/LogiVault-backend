@@ -1,8 +1,9 @@
-package com.logivault.variant;
+package com.logivault.controller;
 
-import com.logivault.variant.dto.UpdateVariantRequest;
-import com.logivault.variant.dto.VariantDetailResponse;
-import com.logivault.variant.dto.VariantResponse;
+import com.logivault.dto.variant.UpdateVariantRequest;
+import com.logivault.dto.variant.VariantDetailResponse;
+import com.logivault.dto.variant.VariantResponse;
+import com.logivault.service.VariantService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,7 +1,7 @@
-package com.logivault.item;
+package com.logivault.entity;
 
 import com.logivault.entity.BaseEntity;
-import com.logivault.variant.Variant;
+import com.logivault.entity.Variant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
