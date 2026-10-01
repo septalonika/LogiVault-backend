@@ -1,0 +1,132 @@
+package com.logivault.order;
+
+import com.logivault.common.exception.BusinessException;
+import com.logivault.common.exception.ErrorCode;
+import com.logivault.common.security.CurrentUser;
+import com.logivault.order.dto.CreateOrderRequest;
+import com.logivault.order.dto.OrderLineRequest;
+import com.logivault.order.dto.OrderResponse;
+import com.logivault.stock.MovementType;
+import com.logivault.stock.StockService;
+import com.logivault.user.User;
+import com.logivault.user.UserRepository;
+import com.logivault.variant.Variant;
+import com.logivault.variant.VariantRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final VariantRepository variantRepository;
+    private final UserRepository userRepository;
+    private final StockService stockService;
+    private final OrderCodeGenerator codeGenerator;
+    private final OrderMapper orderMapper;
+
+    public OrderService(OrderRepository orderRepository, VariantRepository variantRepository,
+                         UserRepository userRepository, StockService stockService,
+                         OrderCodeGenerator codeGenerator, OrderMapper orderMapper) {
+        this.orderRepository = orderRepository;
+        this.variantRepository = variantRepository;
+        this.userRepository = userRepository;
+        this.stockService = stockService;
+        this.codeGenerator = codeGenerator;
+        this.orderMapper = orderMapper;
+    }
+
+    @Transactional
+    public OrderResponse create(CreateOrderRequest request) {
+        List<OrderLineRequest> lines = request.lines();
+        requireDistinctVariants(lines);
+
+        List<UUID> ids = lines.stream().map(OrderLineRequest::variantId).toList();
+        // Rows come back locked and sorted by id, whatever order the client listed the lines in.
+        Map<UUID, Variant> variants = variantRepository.findAllByIdForUpdate(ids).stream()
+                .collect(Collectors.toMap(Variant::getId, Function.identity()));
+
+        if (variants.size() != ids.size()) {
+            throw new BusinessException(ErrorCode.VARIANT_NOT_FOUND);
+        }
+        requireOrderable(lines, variants);
+        requireEnoughStock(lines, variants);
+
+        User actor = userRepository.findById(CurrentUser.id())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Order order = Order.builder()
+                .code(codeGenerator.next())
+                .status(OrderStatus.COMPLETED)
+                .total(BigDecimal.ZERO)
+                .note(request.note())
+                .createdBy(actor)
+                .build();
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (OrderLineRequest line : lines) {
+            Variant variant = variants.get(line.variantId());
+            OrderItem item = OrderItem.of(order, variant, line.qty(), variant.getEffectivePrice());
+            order.getItems().add(item);
+            total = total.add(item.getSubtotal());
+        }
+        order.setTotal(total);
+        orderRepository.save(order);
+
+        for (OrderLineRequest line : lines) {
+            stockService.applyMovement(variants.get(line.variantId()), MovementType.SALE, -line.qty(), null, order, actor);
+        }
+        return orderMapper.toResponse(order);
+    }
+
+    private void requireDistinctVariants(List<OrderLineRequest> lines) {
+        Set<UUID> seen = new HashSet<>();
+        for (OrderLineRequest line : lines) {
+            if (!seen.add(line.variantId())) {
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Duplicate variant in order lines");
+            }
+        }
+    }
+
+    private void requireOrderable(List<OrderLineRequest> lines, Map<UUID, Variant> variants) {
+        List<String> inactive = lines.stream()
+                .map(line -> variants.get(line.variantId()))
+                .filter(variant -> !variant.isOrderable())
+                .map(Variant::getSku)
+                .toList();
+        if (!inactive.isEmpty()) {
+            throw new BusinessException(ErrorCode.VARIANT_INACTIVE,
+                    "Inactive variants: " + String.join(", ", inactive), Map.of("skus", inactive));
+        }
+    }
+
+    // Checks every line before failing so the client sees all shortages at once.
+    private void requireEnoughStock(List<OrderLineRequest> lines, Map<UUID, Variant> variants) {
+        List<Map<String, Object>> shortages = lines.stream()
+                .filter(line -> variants.get(line.variantId()).getStock() < line.qty())
+                .map(line -> {
+                    Variant variant = variants.get(line.variantId());
+                    Map<String, Object> shortage = new LinkedHashMap<>();
+                    shortage.put("variantId", variant.getId());
+                    shortage.put("sku", variant.getSku());
+                    shortage.put("requested", line.qty());
+                    shortage.put("available", variant.getStock());
+                    return shortage;
+                })
+                .toList();
+        if (!shortages.isEmpty()) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_STOCK, ErrorCode.INSUFFICIENT_STOCK.getDefaultMessage(),
+                    Map.of("lines", shortages));
+        }
+    }
+}
