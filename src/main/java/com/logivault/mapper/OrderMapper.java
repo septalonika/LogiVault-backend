@@ -1,9 +1,11 @@
-package com.logivault.order;
+package com.logivault.mapper;
 
+import com.logivault.dto.order.OrderLineResponse;
+import com.logivault.dto.order.OrderResponse;
+import com.logivault.dto.order.OrderSummary;
+import com.logivault.entity.Order;
+import com.logivault.entity.OrderItem;
 import com.logivault.entity.User;
-import com.logivault.order.dto.OrderLineResponse;
-import com.logivault.order.dto.OrderResponse;
-import com.logivault.order.dto.OrderSummary;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

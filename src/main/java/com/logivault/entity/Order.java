@@ -1,4 +1,4 @@
-package com.logivault.order;
+package com.logivault.entity;
 
 import com.logivault.entity.BaseEntity;
 import com.logivault.entity.User;
