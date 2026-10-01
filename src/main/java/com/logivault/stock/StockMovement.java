@@ -1,5 +1,6 @@
 package com.logivault.stock;
 
+import com.logivault.order.Order;
 import com.logivault.user.User;
 import com.logivault.variant.Variant;
 import jakarta.persistence.Column;
@@ -22,7 +23,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 // Append-only ledger: no setters, no update/delete repository method (BR-05).
-// orderId is a plain UUID instead of a relation, since there is no Order entity yet.
 @Entity
 @Table(name = "stock_movements")
 @Getter
@@ -55,8 +55,9 @@ public class StockMovement {
     @Column(length = 255)
     private String reason;
 
-    @Column(name = "order_id")
-    private UUID orderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "actor_id", nullable = false)
@@ -66,7 +67,7 @@ public class StockMovement {
     private Instant createdAt;
 
     public static StockMovement of(Variant variant, MovementType type, int qty, int stockBefore, int stockAfter,
-                                    String reason, UUID orderId, User actor, Instant createdAt) {
+                                    String reason, Order order, User actor, Instant createdAt) {
         return StockMovement.builder()
                 .variant(variant)
                 .type(type)
@@ -74,7 +75,7 @@ public class StockMovement {
                 .stockBefore(stockBefore)
                 .stockAfter(stockAfter)
                 .reason(reason)
-                .orderId(orderId)
+                .order(order)
                 .actor(actor)
                 .createdAt(createdAt)
                 .build();
