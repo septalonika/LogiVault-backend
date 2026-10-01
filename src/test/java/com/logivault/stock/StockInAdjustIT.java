@@ -2,12 +2,12 @@ package com.logivault.stock;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logivault.entity.Role;
+import com.logivault.entity.User;
 import com.logivault.item.dto.CreateItemRequest;
 import com.logivault.stock.dto.AdjustStockRequest;
 import com.logivault.stock.dto.StockInRequest;
 import com.logivault.support.AbstractIntegrationTest;
-import com.logivault.user.Role;
-import com.logivault.user.User;
 import com.logivault.variant.dto.CreateVariantRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

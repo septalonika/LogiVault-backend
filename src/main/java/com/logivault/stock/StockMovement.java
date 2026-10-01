@@ -1,7 +1,7 @@
 package com.logivault.stock;
 
+import com.logivault.entity.User;
 import com.logivault.order.Order;
-import com.logivault.user.User;
 import com.logivault.variant.Variant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

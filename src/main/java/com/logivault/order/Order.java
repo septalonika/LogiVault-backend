@@ -1,9 +1,9 @@
 package com.logivault.order;
 
 import com.logivault.entity.BaseEntity;
+import com.logivault.entity.User;
 import com.logivault.exception.BusinessException;
 import com.logivault.exception.ErrorCode;
-import com.logivault.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
