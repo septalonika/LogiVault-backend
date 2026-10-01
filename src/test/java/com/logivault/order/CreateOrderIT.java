@@ -129,7 +129,8 @@ class CreateOrderIT extends AbstractIntegrationTest {
     void unknownVariant_returns404() throws Exception {
         mockMvc.perform(postOrder(adminToken(), new OrderLineRequest(UUID.randomUUID(), 1)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("VARIANT_NOT_FOUND"));
+                .andExpect(jsonPath("$.code").value("VARIANT_NOT_FOUND"))
+                .andExpect(jsonPath("$.variantIds.length()").value(1));
     }
 
     @Test

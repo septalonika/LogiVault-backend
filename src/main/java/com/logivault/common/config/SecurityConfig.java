@@ -6,6 +6,7 @@ import com.logivault.common.security.RestAccessDeniedHandler;
 import com.logivault.common.security.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -56,6 +57,15 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        // ADMIN gate here runs before argument validation, so STAFF always gets 403 and never
+                        // a 400 that reveals validation rules. @PreAuthorize on the controllers stays as a second layer.
+                        .requestMatchers("/api/v1/users/me", "/api/v1/users/me/**").authenticated()
+                        .requestMatchers("/api/v1/users", "/api/v1/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/items", "/api/v1/items/*/variants").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/items/*", "/api/v1/variants/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/items/*", "/api/v1/variants/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/items/*/activate", "/api/v1/variants/*/activate").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/variants/*/adjust").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
         return http.build();

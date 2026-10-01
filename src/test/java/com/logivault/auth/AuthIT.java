@@ -95,7 +95,7 @@ class AuthIT extends AbstractIntegrationTest {
     @Test
     void accessToken_fromLogin_worksOnAProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/api/v1/items").header("Authorization", "Bearer " + loginAccessToken()))
-                .andExpect(status().isNotFound()); // no /items controller yet; proves it passed auth, not a 401
+                .andExpect(status().isOk());
     }
 
     private String loginAccessToken() throws Exception {

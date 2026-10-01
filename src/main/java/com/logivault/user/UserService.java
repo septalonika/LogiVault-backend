@@ -4,14 +4,23 @@ import com.logivault.auth.RefreshTokenRepository;
 import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
 import com.logivault.common.security.CurrentUser;
+import com.logivault.common.web.PageResponse;
 import com.logivault.user.dto.ChangePasswordRequest;
+import com.logivault.user.dto.CreateUserRequest;
+import com.logivault.user.dto.ResetPasswordRequest;
+import com.logivault.user.dto.UpdateUserRequest;
+import com.logivault.user.dto.UpdateUserStatusRequest;
 import com.logivault.user.dto.UserResponse;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -49,6 +58,89 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
         refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now(clock));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> list(String q, Role role, Boolean active, Pageable pageable) {
+        Specification<User> spec = Specification.where(null);
+        if (q != null && !q.isBlank()) {
+            String like = "%" + q.trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("name")), like),
+                    cb.like(cb.lower(root.get("email")), like)));
+        }
+        if (role != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("role"), role));
+        }
+        if (active != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("active"), active));
+        }
+        return PageResponse.from(userRepository.findAll(spec, pageable), userMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getById(UUID id) {
+        return userMapper.toResponse(findById(id));
+    }
+
+    @Transactional
+    public UserResponse create(CreateUserRequest request) {
+        String email = request.email().trim().toLowerCase();
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+        User user = User.builder()
+                .name(request.name().trim())
+                .email(email)
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .role(request.role())
+                .active(true)
+                .build();
+        try {
+            // Flush now so a concurrent duplicate hits the unique index here, not at commit.
+            return userMapper.toResponse(userRepository.saveAndFlush(user));
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+    }
+
+    @Transactional
+    public UserResponse update(UUID id, UpdateUserRequest request) {
+        User user = findById(id);
+        if (isSelf(user) && request.role() != user.getRole()) {
+            throw new BusinessException(ErrorCode.SELF_MODIFICATION_NOT_ALLOWED);
+        }
+        user.setName(request.name().trim());
+        user.setRole(request.role());
+        return userMapper.toResponse(user);
+    }
+
+    @Transactional
+    public UserResponse updateStatus(UUID id, UpdateUserStatusRequest request) {
+        User user = findById(id);
+        if (!request.active() && isSelf(user)) {
+            throw new BusinessException(ErrorCode.SELF_MODIFICATION_NOT_ALLOWED);
+        }
+        user.setActive(request.active());
+        if (!request.active()) {
+            refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now(clock));
+        }
+        return userMapper.toResponse(user);
+    }
+
+    @Transactional
+    public void resetPassword(UUID id, ResetPasswordRequest request) {
+        User user = findById(id);
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now(clock));
+    }
+
+    private boolean isSelf(User user) {
+        return user.getId().equals(CurrentUser.id());
+    }
+
+    private User findById(UUID id) {
+        return userRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     private User findCurrentUser() {

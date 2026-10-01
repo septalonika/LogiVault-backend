@@ -15,8 +15,9 @@ class UserRepositoryIT extends AbstractIntegrationTest {
 
     @Test
     void seedMigration_createsExactlyOneAdmin() {
-        assertThat(userRepository.existsByRole(Role.ADMIN)).isTrue();
-        assertThat(userRepository.findAll().stream().filter(u -> u.getRole() == Role.ADMIN)).hasSize(1);
+        // Other ITs share this database and create their own admins, so only the seeded one is checked.
+        assertThat(userRepository.findByEmailIgnoreCase("admin@logivault.test"))
+                .hasValueSatisfying(admin -> assertThat(admin.getRole()).isEqualTo(Role.ADMIN));
     }
 
     @Test
