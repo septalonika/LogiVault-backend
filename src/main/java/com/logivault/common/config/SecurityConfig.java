@@ -22,7 +22,7 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    // springdoc/swagger paths stay listed even though they're disabled outside the dev profile (T-25).
+    // springdoc/swagger paths stay listed even though they're disabled outside the dev profile.
     private static final String[] PUBLIC_PATHS = {
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",

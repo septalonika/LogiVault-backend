@@ -3,6 +3,8 @@ package com.logivault.variant;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logivault.item.dto.CreateItemRequest;
+import com.logivault.stock.MovementType;
+import com.logivault.stock.StockService;
 import com.logivault.support.AbstractIntegrationTest;
 import com.logivault.user.Role;
 import com.logivault.user.User;
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +35,15 @@ class VariantIT extends AbstractIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private VariantRepository variantRepository;
+
+    @Autowired
+    private StockService stockService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void getBySku_worksWithLowercaseInput() throws Exception {
@@ -106,6 +119,27 @@ class VariantIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Renamed"))
                 .andExpect(jsonPath("$.effectivePrice").value(12345.00))
                 .andExpect(jsonPath("$.minStock").value(7));
+    }
+
+    @Test
+    void update_changingSkuAfterAStockMovementExists_returns409SkuImmutable() throws Exception {
+        String adminToken = adminAccessToken();
+        String sku = "SKU-" + System.nanoTime();
+        UUID variantId = createItemWithVariant(adminToken, sku);
+        User actor = testData.createUser(Role.ADMIN, PASSWORD);
+
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            Variant locked = variantRepository.findAllByIdForUpdate(List.of(variantId)).get(0);
+            stockService.applyMovement(locked, MovementType.STOCK_IN, 5, "initial stock", null, actor);
+        });
+
+        mockMvc.perform(put("/api/v1/variants/" + variantId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new UpdateVariantRequest("SKU-CHANGED-" + System.nanoTime(), "V", null, null, null))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SKU_IMMUTABLE"));
     }
 
     private String adminAccessToken() throws Exception {
