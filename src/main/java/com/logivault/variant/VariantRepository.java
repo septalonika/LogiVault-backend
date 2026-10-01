@@ -1,5 +1,6 @@
 package com.logivault.variant;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
@@ -13,5 +14,7 @@ public interface VariantRepository extends JpaRepository<Variant, UUID> {
 
     boolean existsBySkuIn(Collection<String> skus);
 
+    // Fetches the parent item too, since VariantResponse.effectivePrice needs it (avoids N+1).
+    @EntityGraph(attributePaths = "item")
     List<Variant> findByItemIdOrderBySku(UUID itemId);
 }

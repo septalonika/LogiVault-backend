@@ -2,12 +2,17 @@ package com.logivault.item;
 
 import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
+import com.logivault.common.web.PageResponse;
 import com.logivault.item.dto.CreateItemRequest;
 import com.logivault.item.dto.ItemResponse;
+import com.logivault.item.dto.ItemSummary;
+import com.logivault.item.dto.UpdateItemRequest;
 import com.logivault.variant.SkuNormalizer;
 import com.logivault.variant.Variant;
 import com.logivault.variant.VariantRepository;
 import com.logivault.variant.dto.CreateVariantRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,6 +77,32 @@ public class ItemService {
         }
 
         return itemMapper.toResponse(item);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ItemSummary> list(String q, Boolean active, Pageable pageable) {
+        String likeQ = (q == null || q.isBlank()) ? null : "%" + q.toLowerCase() + "%";
+        Page<ItemSummary> page = itemRepository.search(likeQ, active, pageable);
+        return PageResponse.from(page);
+    }
+
+    @Transactional(readOnly = true)
+    public ItemResponse getById(UUID id) {
+        return itemMapper.toResponse(findWithVariants(id));
+    }
+
+    @Transactional
+    public ItemResponse update(UUID id, UpdateItemRequest request) {
+        Item item = findWithVariants(id);
+        item.setName(request.name());
+        item.setDescription(request.description());
+        item.setBasePrice(request.basePrice());
+        return itemMapper.toResponse(item);
+    }
+
+    private Item findWithVariants(UUID id) {
+        return itemRepository.findWithVariantsById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));
     }
 
     private CreateVariantRequest defaultVariantRequest() {
