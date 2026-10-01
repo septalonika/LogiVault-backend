@@ -1,4 +1,4 @@
-package com.logivault.common.entity;
+package com.logivault.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

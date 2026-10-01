@@ -1,6 +1,6 @@
 package com.logivault.user;
 
-import com.logivault.common.web.PageResponse;
+import com.logivault.dto.PageResponse;
 import com.logivault.user.dto.ChangePasswordRequest;
 import com.logivault.user.dto.CreateUserRequest;
 import com.logivault.user.dto.ResetPasswordRequest;

@@ -1,6 +1,6 @@
 package com.logivault.item;
 
-import com.logivault.common.web.PageResponse;
+import com.logivault.dto.PageResponse;
 import com.logivault.item.dto.CreateItemRequest;
 import com.logivault.item.dto.ItemResponse;
 import com.logivault.item.dto.ItemSummary;

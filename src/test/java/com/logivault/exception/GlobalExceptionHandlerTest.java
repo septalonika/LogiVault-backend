@@ -1,4 +1,4 @@
-package com.logivault.common.exception;
+package com.logivault.exception;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

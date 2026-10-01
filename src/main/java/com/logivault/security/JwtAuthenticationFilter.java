@@ -1,4 +1,4 @@
-package com.logivault.common.security;
+package com.logivault.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

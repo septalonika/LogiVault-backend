@@ -1,6 +1,6 @@
 package com.logivault.user;
 
-import com.logivault.common.entity.BaseEntity;
+import com.logivault.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

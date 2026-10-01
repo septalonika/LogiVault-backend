@@ -1,6 +1,6 @@
-package com.logivault.common.security;
+package com.logivault.security;
 
-import com.logivault.common.config.LogiVaultProperties;
+import com.logivault.config.LogiVaultProperties;
 import com.logivault.user.Role;
 import org.junit.jupiter.api.Test;
 

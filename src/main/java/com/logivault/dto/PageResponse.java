@@ -1,4 +1,4 @@
-package com.logivault.common.web;
+package com.logivault.dto;
 
 import org.springframework.data.domain.Page;
 

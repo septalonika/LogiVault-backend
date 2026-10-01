@@ -1,4 +1,4 @@
-package com.logivault.common.config;
+package com.logivault.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

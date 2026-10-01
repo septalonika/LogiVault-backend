@@ -1,4 +1,4 @@
-package com.logivault.common.security;
+package com.logivault.security;
 
 import com.logivault.support.AbstractIntegrationTest;
 import com.logivault.user.Role;
