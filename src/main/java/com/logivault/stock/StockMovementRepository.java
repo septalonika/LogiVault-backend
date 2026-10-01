@@ -19,7 +19,7 @@ public interface StockMovementRepository extends Repository<StockMovement, UUID>
 
     // Each optional filter gets its own boolean flag instead of "(:param is null or ...)": a parameter
     // used only in an IS NULL check has no type context, and Postgres then refuses to bind it.
-    @EntityGraph(attributePaths = "actor")
+    @EntityGraph(attributePaths = {"actor", "order"})
     @Query("""
             select m from StockMovement m
             where m.variant.id = :variantId

@@ -5,6 +5,7 @@ import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
 import com.logivault.common.security.CurrentUser;
 import com.logivault.common.web.PageResponse;
+import com.logivault.order.Order;
 import com.logivault.stock.dto.AdjustStockRequest;
 import com.logivault.stock.dto.MovementResponse;
 import com.logivault.stock.dto.StockChangeResponse;
@@ -53,7 +54,7 @@ public class StockService {
     // have already locked the variant), so the stock change and its ledger entry commit together.
     @Transactional(propagation = Propagation.MANDATORY)
     public StockMovement applyMovement(Variant lockedVariant, MovementType type, int signedQty, String reason,
-                                        UUID orderId, User actor) {
+                                        Order order, User actor) {
         int before = lockedVariant.getStock();
         int after = before + signedQty;
         if (after < 0) {
@@ -62,7 +63,7 @@ public class StockService {
 
         lockedVariant.applyStockDelta(signedQty);
         StockMovement movement = stockMovementRepository.save(
-                StockMovement.of(lockedVariant, type, signedQty, before, after, reason, orderId, actor, Instant.now(clock)));
+                StockMovement.of(lockedVariant, type, signedQty, before, after, reason, order, actor, Instant.now(clock)));
 
         log.info("Stock {} on variant {}: {} -> {} ({})", type, lockedVariant.getId(), before, after, actor.getId());
         return movement;
