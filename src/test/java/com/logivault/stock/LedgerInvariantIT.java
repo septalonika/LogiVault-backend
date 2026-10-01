@@ -1,5 +1,6 @@
 package com.logivault.stock;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logivault.support.AbstractIntegrationTest;
 import com.logivault.user.Role;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -34,10 +36,11 @@ class LedgerInvariantIT extends AbstractIntegrationTest {
                 testData.createVariantWithStock(admin, 0),
                 testData.createVariantWithStock(admin, 0));
         Random random = new Random(42);
+        List<String> orderIds = new ArrayList<>();
 
         for (int i = 0; i < 150; i++) {
             UUID variant = variants.get(random.nextInt(variants.size()));
-            switch (random.nextInt(3)) {
+            switch (random.nextInt(4)) {
                 case 0 -> send(admin, "/api/v1/variants/" + variant + "/stock-in",
                         Map.of("qty", 1 + random.nextInt(20), "note", "random"));
                 case 1 -> {
@@ -45,9 +48,20 @@ class LedgerInvariantIT extends AbstractIntegrationTest {
                     send(admin, "/api/v1/variants/" + variant + "/adjust",
                             Map.of("delta", delta == 0 ? 1 : delta, "reason", "random"));
                 }
-                default -> send(admin, "/api/v1/orders",
-                        Map.of("lines", List.of(Map.of("variantId", variant.toString(), "qty", 1 + random.nextInt(8)))));
-                // TODO(T-19): add a cancel step here once POST /orders/{id}/cancel exists.
+                case 2 -> {
+                    String body = send(admin, "/api/v1/orders",
+                            Map.of("lines", List.of(Map.of("variantId", variant.toString(), "qty", 1 + random.nextInt(8)))));
+                    JsonNode created = objectMapper.readTree(body);
+                    if (created.has("id")) {
+                        orderIds.add(created.get("id").asText());
+                    }
+                }
+                default -> {
+                    if (!orderIds.isEmpty()) {
+                        send(admin, "/api/v1/orders/" + orderIds.remove(random.nextInt(orderIds.size())) + "/cancel",
+                                Map.of("reason", "random"));
+                    }
+                }
             }
         }
 
@@ -65,10 +79,11 @@ class LedgerInvariantIT extends AbstractIntegrationTest {
     }
 
     // Rejected requests (e.g. 409 on an overdraw) are expected in a random run, so statuses are not asserted.
-    private void send(String token, String path, Map<String, Object> body) throws Exception {
-        mockMvc.perform(post(path)
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(body)));
+    private String send(String token, String path, Map<String, Object> body) throws Exception {
+        return mockMvc.perform(post(path)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andReturn().getResponse().getContentAsString();
     }
 }

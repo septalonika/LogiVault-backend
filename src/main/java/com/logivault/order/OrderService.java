@@ -3,6 +3,7 @@ package com.logivault.order;
 import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
 import com.logivault.common.security.CurrentUser;
+import com.logivault.order.dto.CancelOrderRequest;
 import com.logivault.order.dto.CreateOrderRequest;
 import com.logivault.order.dto.OrderLineRequest;
 import com.logivault.order.dto.OrderResponse;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,16 +37,18 @@ public class OrderService {
     private final StockService stockService;
     private final OrderCodeGenerator codeGenerator;
     private final OrderMapper orderMapper;
+    private final Clock clock;
 
     public OrderService(OrderRepository orderRepository, VariantRepository variantRepository,
                          UserRepository userRepository, StockService stockService,
-                         OrderCodeGenerator codeGenerator, OrderMapper orderMapper) {
+                         OrderCodeGenerator codeGenerator, OrderMapper orderMapper, Clock clock) {
         this.orderRepository = orderRepository;
         this.variantRepository = variantRepository;
         this.userRepository = userRepository;
         this.stockService = stockService;
         this.codeGenerator = codeGenerator;
         this.orderMapper = orderMapper;
+        this.clock = clock;
     }
 
     @Transactional
@@ -85,6 +90,26 @@ public class OrderService {
 
         for (OrderLineRequest line : lines) {
             stockService.applyMovement(variants.get(line.variantId()), MovementType.SALE, -line.qty(), null, order, actor);
+        }
+        return orderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse cancel(UUID orderId, CancelOrderRequest request) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        User actor = userRepository.findById(CurrentUser.id())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        order.cancel(actor, request.reason(), Instant.now(clock));
+
+        // No orderable check here: stock must come back even if the variant was deactivated since (BR-19).
+        List<UUID> ids = order.getItems().stream().map(item -> item.getVariant().getId()).toList();
+        Map<UUID, Variant> variants = variantRepository.findAllByIdForUpdate(ids).stream()
+                .collect(Collectors.toMap(Variant::getId, Function.identity()));
+        for (OrderItem item : order.getItems()) {
+            stockService.applyMovement(variants.get(item.getVariant().getId()), MovementType.SALE_CANCEL,
+                    item.getQty(), request.reason(), order, actor);
         }
         return orderMapper.toResponse(order);
     }
