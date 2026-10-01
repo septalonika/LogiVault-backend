@@ -1,6 +1,9 @@
 package com.logivault.variant;
 
+import com.logivault.stock.dto.LowStockResponse;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -31,4 +34,17 @@ public interface VariantRepository extends JpaRepository<Variant, UUID> {
 
     @EntityGraph(attributePaths = "item")
     List<Variant> findByItemIdOrderBySku(UUID itemId);
+
+    // Most critical first; the order is part of the query, so the pageable must carry no sort.
+    @Query(value = """
+            select new com.logivault.stock.dto.LowStockResponse(v.id, v.sku, i.name, v.name, v.stock, v.minStock)
+            from Variant v join v.item i
+            where v.active = true and i.active = true and v.stock <= v.minStock
+            order by (v.stock - v.minStock) asc, v.sku asc
+            """,
+            countQuery = """
+            select count(v) from Variant v join v.item i
+            where v.active = true and i.active = true and v.stock <= v.minStock
+            """)
+    Page<LowStockResponse> findLowStock(Pageable pageable);
 }

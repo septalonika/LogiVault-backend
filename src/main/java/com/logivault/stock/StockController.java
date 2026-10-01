@@ -2,6 +2,7 @@ package com.logivault.stock;
 
 import com.logivault.common.web.PageResponse;
 import com.logivault.stock.dto.AdjustStockRequest;
+import com.logivault.stock.dto.LowStockResponse;
 import com.logivault.stock.dto.MovementResponse;
 import com.logivault.stock.dto.StockChangeResponse;
 import com.logivault.stock.dto.StockInRequest;
@@ -24,7 +25,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/variants")
+@RequestMapping("/api/v1")
 public class StockController {
 
     private final StockService stockService;
@@ -33,23 +34,28 @@ public class StockController {
         this.stockService = stockService;
     }
 
-    @PostMapping("/{id}/stock-in")
+    @PostMapping("/variants/{id}/stock-in")
     public ResponseEntity<StockChangeResponse> stockIn(@PathVariable UUID id, @Valid @RequestBody StockInRequest request) {
         return ResponseEntity.ok(stockService.stockIn(id, request));
     }
 
-    @PostMapping("/{id}/adjust")
+    @PostMapping("/variants/{id}/adjust")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StockChangeResponse> adjust(@PathVariable UUID id, @Valid @RequestBody AdjustStockRequest request) {
         return ResponseEntity.ok(stockService.adjust(id, request));
     }
 
-    @GetMapping("/{id}/movements")
+    @GetMapping("/variants/{id}/movements")
     public PageResponse<MovementResponse> history(@PathVariable UUID id,
                                                    @RequestParam(required = false) MovementType type,
                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                                    @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return stockService.history(id, type, from, to, pageable);
+    }
+
+    @GetMapping("/stock/low")
+    public PageResponse<LowStockResponse> lowStock(@PageableDefault Pageable pageable) {
+        return stockService.lowStock(pageable);
     }
 }

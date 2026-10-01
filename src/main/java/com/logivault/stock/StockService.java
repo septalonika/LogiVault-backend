@@ -7,6 +7,7 @@ import com.logivault.common.security.CurrentUser;
 import com.logivault.common.web.PageResponse;
 import com.logivault.order.Order;
 import com.logivault.stock.dto.AdjustStockRequest;
+import com.logivault.stock.dto.LowStockResponse;
 import com.logivault.stock.dto.MovementResponse;
 import com.logivault.stock.dto.StockChangeResponse;
 import com.logivault.stock.dto.StockInRequest;
@@ -105,6 +106,12 @@ public class StockService {
         Page<StockMovement> page = stockMovementRepository.findHistory(variantId,
                 type != null, type, fromInstant != null, fromInstant, toExclusive != null, toExclusive, fixedSort);
         return PageResponse.from(page, stockMovementMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<LowStockResponse> lowStock(Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return PageResponse.from(variantRepository.findLowStock(unsorted));
     }
 
     private Variant lockOrThrow(UUID variantId) {
