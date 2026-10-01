@@ -49,7 +49,7 @@ public class Variant extends BaseEntity {
     @Column(precision = 14, scale = 2)
     private BigDecimal price;
 
-    // Stock only ever changes through StockService.applyMovement (T-13), never a plain setter.
+    // Stock only ever changes through StockService.applyMovement, never a plain setter.
     @Setter(AccessLevel.NONE)
     @Column(nullable = false)
     private int stock;
@@ -74,5 +74,10 @@ public class Variant extends BaseEntity {
 
     public boolean isOrderable() {
         return active && item.isActive();
+    }
+
+    // Only StockService.applyMovement may call this; it is the single path that changes stock.
+    public void applyStockDelta(int delta) {
+        this.stock += delta;
     }
 }

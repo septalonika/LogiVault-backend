@@ -4,6 +4,7 @@ import com.logivault.common.exception.BusinessException;
 import com.logivault.common.exception.ErrorCode;
 import com.logivault.item.Item;
 import com.logivault.item.ItemRepository;
+import com.logivault.stock.StockMovementRepository;
 import com.logivault.variant.dto.CreateVariantRequest;
 import com.logivault.variant.dto.UpdateVariantRequest;
 import com.logivault.variant.dto.VariantDetailResponse;
@@ -18,17 +19,18 @@ import java.util.UUID;
 @Service
 public class VariantService {
 
-    // Deferred to T-13: once StockMovementRepository exists, changing the SKU after a variant has
-    // movements must be rejected with SKU_IMMUTABLE. No movements can exist before T-13 ships.
     private static final int DEFAULT_MIN_STOCK = 5;
 
     private final ItemRepository itemRepository;
     private final VariantRepository variantRepository;
+    private final StockMovementRepository stockMovementRepository;
     private final VariantMapper variantMapper;
 
-    public VariantService(ItemRepository itemRepository, VariantRepository variantRepository, VariantMapper variantMapper) {
+    public VariantService(ItemRepository itemRepository, VariantRepository variantRepository,
+                           StockMovementRepository stockMovementRepository, VariantMapper variantMapper) {
         this.itemRepository = itemRepository;
         this.variantRepository = variantRepository;
+        this.stockMovementRepository = stockMovementRepository;
         this.variantMapper = variantMapper;
     }
 
@@ -82,11 +84,15 @@ public class VariantService {
         Variant variant = findOrThrow(id);
 
         String newSku = SkuNormalizer.normalize(request.sku());
-        if (!newSku.equals(variant.getSku()) && variantRepository.findBySku(newSku).isPresent()) {
-            throw new BusinessException(ErrorCode.SKU_ALREADY_EXISTS);
+        if (!newSku.equals(variant.getSku())) {
+            if (stockMovementRepository.existsByVariantId(variant.getId())) {
+                throw new BusinessException(ErrorCode.SKU_IMMUTABLE);
+            }
+            if (variantRepository.findBySku(newSku).isPresent()) {
+                throw new BusinessException(ErrorCode.SKU_ALREADY_EXISTS);
+            }
+            variant.setSku(newSku);
         }
-
-        variant.setSku(newSku);
         variant.setName(request.name());
         variant.setAttributes(request.attributes() != null ? request.attributes() : Map.of());
         variant.setPrice(request.price());
