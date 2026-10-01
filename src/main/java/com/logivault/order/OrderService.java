@@ -72,7 +72,9 @@ public class OrderService {
                 .collect(Collectors.toMap(Variant::getId, Function.identity()));
 
         if (variants.size() != ids.size()) {
-            throw new BusinessException(ErrorCode.VARIANT_NOT_FOUND);
+            List<UUID> missing = ids.stream().filter(id -> !variants.containsKey(id)).toList();
+            throw new BusinessException(ErrorCode.VARIANT_NOT_FOUND,
+                    "Variants not found: " + missing, Map.of("variantIds", missing));
         }
         requireOrderable(lines, variants);
         requireEnoughStock(lines, variants);

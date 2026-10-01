@@ -44,9 +44,7 @@ class SecurityConfigIT extends AbstractIntegrationTest {
     void protectedEndpoint_withValidToken_passesTheSecurityLayer() throws Exception {
         String token = jwtService.createAccessToken(new AuthUser(UUID.randomUUID(), "staff@logivault.test", Role.STAFF));
 
-        // No controller exists yet for /api/v1/items, so a 404 here proves the request got past
-        // authentication instead of being stopped at 401.
         mockMvc.perform(get("/api/v1/items").header("Authorization", "Bearer " + token))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk());
     }
 }

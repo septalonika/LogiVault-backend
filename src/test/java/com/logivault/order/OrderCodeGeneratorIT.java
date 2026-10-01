@@ -36,28 +36,28 @@ class OrderCodeGeneratorIT extends AbstractIntegrationTest {
 
     @Test
     void next_onTheSameDay_incrementsSequentially() {
-        OrderCodeGenerator generator = generatorAt("2026-10-01T05:00:00Z"); // 12:00 WIB
+        OrderCodeGenerator generator = generatorAt("2031-10-01T05:00:00Z"); // 12:00 WIB
 
         String first = inTransaction(generator::next);
         String second = inTransaction(generator::next);
 
-        assertThat(first).isEqualTo("ORD-20261001-0001");
-        assertThat(second).isEqualTo("ORD-20261001-0002");
+        assertThat(first).isEqualTo("ORD-20311001-0001");
+        assertThat(second).isEqualTo("ORD-20311001-0002");
     }
 
     @Test
     void next_usesBusinessZoneNotUtcDate() {
-        // 2026-10-01T18:00:00Z is 2026-10-02T01:00 in Asia/Jakarta (UTC+7).
-        OrderCodeGenerator generator = generatorAt("2026-10-01T18:00:00Z");
+        // 2031-10-01T18:00:00Z is 2031-10-02T01:00 in Asia/Jakarta (UTC+7).
+        OrderCodeGenerator generator = generatorAt("2031-10-01T18:00:00Z");
 
         String code = inTransaction(generator::next);
 
-        assertThat(code).startsWith("ORD-20261002-");
+        assertThat(code).startsWith("ORD-20311002-");
     }
 
     @Test
     void next_concurrentCalls_produceUniqueCodes() throws Exception {
-        OrderCodeGenerator generator = generatorAt("2026-11-05T05:00:00Z");
+        OrderCodeGenerator generator = generatorAt("2031-11-05T05:00:00Z");
         int threads = 10;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
 
