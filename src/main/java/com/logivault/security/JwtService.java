@@ -1,15 +1,15 @@
 package com.logivault.security;
 
 import com.logivault.config.LogiVaultProperties;
-import com.logivault.user.Role;
+import com.logivault.entity.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;

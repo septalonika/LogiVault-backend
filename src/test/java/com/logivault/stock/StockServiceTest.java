@@ -1,12 +1,12 @@
 package com.logivault.stock;
 
+import com.logivault.config.LogiVaultProperties;
+import com.logivault.entity.Role;
+import com.logivault.entity.User;
 import com.logivault.exception.BusinessException;
 import com.logivault.exception.ErrorCode;
-import com.logivault.config.LogiVaultProperties;
 import com.logivault.item.Item;
-import com.logivault.user.Role;
-import com.logivault.user.User;
-import com.logivault.user.UserRepository;
+import com.logivault.repository.UserRepository;
 import com.logivault.variant.Variant;
 import com.logivault.variant.VariantRepository;
 import org.junit.jupiter.api.Test;

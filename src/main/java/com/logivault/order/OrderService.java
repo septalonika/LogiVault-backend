@@ -1,19 +1,19 @@
 package com.logivault.order;
 
+import com.logivault.config.LogiVaultProperties;
+import com.logivault.dto.PageResponse;
+import com.logivault.entity.User;
 import com.logivault.exception.BusinessException;
 import com.logivault.exception.ErrorCode;
-import com.logivault.config.LogiVaultProperties;
-import com.logivault.security.CurrentUser;
-import com.logivault.dto.PageResponse;
 import com.logivault.order.dto.CancelOrderRequest;
 import com.logivault.order.dto.CreateOrderRequest;
 import com.logivault.order.dto.OrderLineRequest;
 import com.logivault.order.dto.OrderResponse;
 import com.logivault.order.dto.OrderSummary;
+import com.logivault.repository.UserRepository;
+import com.logivault.security.CurrentUser;
 import com.logivault.stock.MovementType;
 import com.logivault.stock.StockService;
-import com.logivault.user.User;
-import com.logivault.user.UserRepository;
 import com.logivault.variant.Variant;
 import com.logivault.variant.VariantRepository;
 import org.springframework.data.domain.Page;

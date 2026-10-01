@@ -1,7 +1,7 @@
 package com.logivault.security;
 
 import com.logivault.config.LogiVaultProperties;
-import com.logivault.user.Role;
+import com.logivault.entity.Role;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;

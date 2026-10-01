@@ -1,6 +1,6 @@
 package com.logivault.security;
 
-import com.logivault.user.Role;
+import com.logivault.entity.Role;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.UUID;

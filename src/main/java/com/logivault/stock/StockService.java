@@ -1,18 +1,18 @@
 package com.logivault.stock;
 
 import com.logivault.config.LogiVaultProperties;
+import com.logivault.dto.PageResponse;
+import com.logivault.entity.User;
 import com.logivault.exception.BusinessException;
 import com.logivault.exception.ErrorCode;
-import com.logivault.security.CurrentUser;
-import com.logivault.dto.PageResponse;
 import com.logivault.order.Order;
+import com.logivault.repository.UserRepository;
+import com.logivault.security.CurrentUser;
 import com.logivault.stock.dto.AdjustStockRequest;
 import com.logivault.stock.dto.LowStockResponse;
 import com.logivault.stock.dto.MovementResponse;
 import com.logivault.stock.dto.StockChangeResponse;
 import com.logivault.stock.dto.StockInRequest;
-import com.logivault.user.User;
-import com.logivault.user.UserRepository;
 import com.logivault.variant.Variant;
 import com.logivault.variant.VariantRepository;
 import lombok.extern.slf4j.Slf4j;

@@ -2,9 +2,9 @@ package com.logivault.order;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logivault.entity.Role;
+import com.logivault.entity.User;
 import com.logivault.support.AbstractIntegrationTest;
-import com.logivault.user.Role;
-import com.logivault.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

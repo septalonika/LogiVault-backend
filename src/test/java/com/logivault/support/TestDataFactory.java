@@ -2,9 +2,9 @@ package com.logivault.support;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.logivault.user.Role;
-import com.logivault.user.User;
-import com.logivault.user.UserRepository;
+import com.logivault.entity.Role;
+import com.logivault.entity.User;
+import com.logivault.repository.UserRepository;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;

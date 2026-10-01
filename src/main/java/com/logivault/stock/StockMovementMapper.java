@@ -1,7 +1,7 @@
 package com.logivault.stock;
 
+import com.logivault.entity.User;
 import com.logivault.stock.dto.MovementResponse;
-import com.logivault.user.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
