@@ -38,11 +38,11 @@ class CreateItemIT extends AbstractIntegrationTest {
 
         mockMvc.perform(postItem(request, adminToken))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.variants.length()").value(2))
-                .andExpect(jsonPath("$.variants[0].stock").value(0))
-                .andExpect(jsonPath("$.variants[1].stock").value(0))
-                .andExpect(jsonPath("$.variants[1].effectivePrice").value(95000.00))
-                .andExpect(jsonPath("$.variants[0].effectivePrice").value(85000.00));
+                .andExpect(jsonPath("$.data.variants.length()").value(2))
+                .andExpect(jsonPath("$.data.variants[0].stock").value(0))
+                .andExpect(jsonPath("$.data.variants[1].stock").value(0))
+                .andExpect(jsonPath("$.data.variants[1].effectivePrice").value(95000.00))
+                .andExpect(jsonPath("$.data.variants[0].effectivePrice").value(85000.00));
     }
 
     @Test
@@ -51,9 +51,9 @@ class CreateItemIT extends AbstractIntegrationTest {
 
         mockMvc.perform(postItem(request, adminAccessToken()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.variants.length()").value(1))
-                .andExpect(jsonPath("$.variants[0].name").value("Default"))
-                .andExpect(jsonPath("$.variants[0].sku").value(startsWith("ITEM-")));
+                .andExpect(jsonPath("$.data.variants.length()").value(1))
+                .andExpect(jsonPath("$.data.variants[0].name").value("Default"))
+                .andExpect(jsonPath("$.data.variants[0].sku").value(startsWith("ITEM-")));
     }
 
     @Test

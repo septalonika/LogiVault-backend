@@ -50,14 +50,14 @@ class LowStockIT extends AbstractIntegrationTest {
         String tag = "LS" + System.nanoTime();
         UUID inactiveVariant = variant(admin, tag + "-A", 5, 1);
         mockMvc.perform(delete("/api/v1/variants/" + inactiveVariant).header("Authorization", "Bearer " + admin))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         UUID inactiveItemVariant = variant(admin, tag + "-B", 5, 1);
         String itemId = objectMapper.readTree(mockMvc.perform(get("/api/v1/variants/" + inactiveItemVariant)
                         .header("Authorization", "Bearer " + admin)).andReturn().getResponse().getContentAsString())
-                .get("itemId").asText();
+                .get("data").get("itemId").asText();
         mockMvc.perform(delete("/api/v1/items/" + itemId).header("Authorization", "Bearer " + admin))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         List<String> ids = lowStockIds(admin);
 
@@ -80,8 +80,8 @@ class LowStockIT extends AbstractIntegrationTest {
                             .header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString());
-            body.get("content").forEach(row -> ids.add(row.get("variantId").asText()));
-            if (page + 1 >= body.get("totalPages").asInt()) {
+            body.get("data").forEach(row -> ids.add(row.get("variantId").asText()));
+            if (page + 1 >= body.get("meta").get("totalPages").asInt()) {
                 return ids;
             }
         }
@@ -96,7 +96,7 @@ class LowStockIT extends AbstractIntegrationTest {
                         .content(objectMapper.writeValueAsString(item)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString());
-        UUID id = UUID.fromString(created.get("variants").get(0).get("id").asText());
+        UUID id = UUID.fromString(created.get("data").get("variants").get(0).get("id").asText());
         if (stock > 0) {
             testData.stockIn(admin, id, stock);
         }

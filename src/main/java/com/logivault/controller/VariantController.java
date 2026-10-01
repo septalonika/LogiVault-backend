@@ -1,5 +1,6 @@
 package com.logivault.controller;
 
+import com.logivault.dto.WebResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,16 +37,16 @@ public class VariantController {
     @ApiResponse(responseCode = "200", description = "Variant")
     @ApiResponse(responseCode = "404", description = "VARIANT_NOT_FOUND")
     @GetMapping("/{id}")
-    public ResponseEntity<VariantDetailResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(variantService.getById(id));
+    public ResponseEntity<WebResponse<VariantDetailResponse>> getById(@PathVariable UUID id) {
+        return WebResponse.ok("Variant retrieved", variantService.getById(id));
     }
 
     @Operation(summary = "Get a variant by SKU (case-insensitive)")
     @ApiResponse(responseCode = "200", description = "Variant")
     @ApiResponse(responseCode = "404", description = "VARIANT_NOT_FOUND")
     @GetMapping("/sku/{sku}")
-    public ResponseEntity<VariantDetailResponse> getBySku(@PathVariable String sku) {
-        return ResponseEntity.ok(variantService.getBySku(sku));
+    public ResponseEntity<WebResponse<VariantDetailResponse>> getBySku(@PathVariable String sku) {
+        return WebResponse.ok("Variant retrieved", variantService.getBySku(sku));
     }
 
     @Operation(summary = "Update a variant (ADMIN)")
@@ -54,18 +55,18 @@ public class VariantController {
     @ApiResponse(responseCode = "409", description = "SKU_ALREADY_EXISTS or SKU_IMMUTABLE")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<VariantResponse> update(@PathVariable UUID id, @Valid @RequestBody UpdateVariantRequest request) {
-        return ResponseEntity.ok(variantService.update(id, request));
+    public ResponseEntity<WebResponse<VariantResponse>> update(@PathVariable UUID id, @Valid @RequestBody UpdateVariantRequest request) {
+        return WebResponse.ok("Variant updated", variantService.update(id, request));
     }
 
     @Operation(summary = "Deactivate a variant (ADMIN)")
-    @ApiResponse(responseCode = "204", description = "Deactivated")
+    @ApiResponse(responseCode = "200", description = "Deactivated")
     @ApiResponse(responseCode = "404", description = "VARIANT_NOT_FOUND")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
+    public ResponseEntity<WebResponse<Void>> deactivate(@PathVariable UUID id) {
         variantService.deactivate(id);
-        return ResponseEntity.noContent().build();
+        return WebResponse.ok("Variant deactivated");
     }
 
     @Operation(summary = "Reactivate a variant (ADMIN)")
@@ -73,7 +74,7 @@ public class VariantController {
     @ApiResponse(responseCode = "404", description = "VARIANT_NOT_FOUND")
     @PatchMapping("/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<VariantResponse> activate(@PathVariable UUID id) {
-        return ResponseEntity.ok(variantService.activate(id));
+    public ResponseEntity<WebResponse<VariantResponse>> activate(@PathVariable UUID id) {
+        return WebResponse.ok("Variant activated", variantService.activate(id));
     }
 }

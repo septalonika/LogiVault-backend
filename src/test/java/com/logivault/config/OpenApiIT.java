@@ -78,6 +78,19 @@ class OpenApiIT extends AbstractIntegrationTest {
         assertThat(responses.get("409").get("description").asText()).contains("INSUFFICIENT_STOCK");
         assertThat(responses.has("401")).isTrue();
         assertThat(responses.has("400")).isTrue();
-        assertThat(docs().at("/components/schemas/Problem/properties/code")).isNotEmpty();
+        assertThat(responses.at("/409/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/ErrorResponse");
+        assertThat(docs().at("/components/schemas/ErrorResponse/properties/code")).isNotEmpty();
+    }
+
+    @Test
+    void successResponsesAreWrappedInTheEnvelope() throws Exception {
+        JsonNode docs = docs();
+        String ref = docs.at("/paths/~1api~1v1~1orders/post/responses/201/content/*~1*/schema/$ref").asText();
+        JsonNode envelope = docs.at("/components/schemas/" + ref.substring(ref.lastIndexOf('/') + 1) + "/properties");
+
+        assertThat(envelope.has("status")).isTrue();
+        assertThat(envelope.has("message")).isTrue();
+        assertThat(envelope.at("/data/$ref").asText()).endsWith("/OrderResponse");
     }
 }

@@ -32,20 +32,20 @@ class CancelOrderIT extends AbstractIntegrationTest {
 
         mockMvc.perform(cancel(orderId, "customer changed mind", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.cancelReason").value("customer changed mind"))
-                .andExpect(jsonPath("$.cancelledBy.id").isNotEmpty())
-                .andExpect(jsonPath("$.cancelledAt").isNotEmpty());
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.cancelReason").value("customer changed mind"))
+                .andExpect(jsonPath("$.data.cancelledBy.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.cancelledAt").isNotEmpty());
 
         mockMvc.perform(get("/api/v1/variants/" + variant).header("Authorization", "Bearer " + token))
-                .andExpect(jsonPath("$.stock").value(10));
+                .andExpect(jsonPath("$.data.stock").value(10));
         mockMvc.perform(get("/api/v1/variants/" + variant + "/movements?type=SALE_CANCEL")
                         .header("Authorization", "Bearer " + token))
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].qty").value(3))
-                .andExpect(jsonPath("$.content[0].stockBefore").value(7))
-                .andExpect(jsonPath("$.content[0].stockAfter").value(10))
-                .andExpect(jsonPath("$.content[0].reason").value("customer changed mind"));
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].qty").value(3))
+                .andExpect(jsonPath("$.data[0].stockBefore").value(7))
+                .andExpect(jsonPath("$.data[0].stockAfter").value(10))
+                .andExpect(jsonPath("$.data[0].reason").value("customer changed mind"));
     }
 
     @Test
@@ -87,12 +87,12 @@ class CancelOrderIT extends AbstractIntegrationTest {
         UUID variant = testData.createVariantWithStock(token, 5);
         String orderId = createOrder(token, variant, 2);
         mockMvc.perform(delete("/api/v1/variants/" + variant).header("Authorization", "Bearer " + token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(cancel(orderId, "variant retired", token)).andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/variants/" + variant).header("Authorization", "Bearer " + token))
-                .andExpect(jsonPath("$.stock").value(5));
+                .andExpect(jsonPath("$.data.stock").value(5));
     }
 
     @Test
@@ -112,7 +112,7 @@ class CancelOrderIT extends AbstractIntegrationTest {
                                 Map.of("lines", List.of(Map.of("variantId", variant.toString(), "qty", qty))))))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(body).get("id").asText();
+        return objectMapper.readTree(body).get("data").get("id").asText();
     }
 
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder cancel(String orderId, String reason, String token)

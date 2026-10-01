@@ -55,9 +55,9 @@ class VariantIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/variants/sku/" + sku.toLowerCase()).header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sku").value(sku))
-                .andExpect(jsonPath("$.itemName").value("Variant Test Item"))
-                .andExpect(jsonPath("$.itemActive").value(true));
+                .andExpect(jsonPath("$.data.sku").value(sku))
+                .andExpect(jsonPath("$.data.itemName").value("Variant Test Item"))
+                .andExpect(jsonPath("$.data.itemActive").value(true));
     }
 
     @Test
@@ -73,15 +73,15 @@ class VariantIT extends AbstractIntegrationTest {
         UUID variantId = createItemWithVariant(adminToken, "SKU-" + System.nanoTime());
 
         mockMvc.perform(delete("/api/v1/variants/" + variantId).header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/variants/" + variantId).header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(false));
+                .andExpect(jsonPath("$.data.active").value(false));
 
         mockMvc.perform(patch("/api/v1/variants/" + variantId + "/activate").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.data.active").value(true));
     }
 
     @Test
@@ -118,9 +118,9 @@ class VariantIT extends AbstractIntegrationTest {
                         .content(objectMapper.writeValueAsString(
                                 new UpdateVariantRequest(sku, "Renamed", null, new BigDecimal("12345.00"), 7))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Renamed"))
-                .andExpect(jsonPath("$.effectivePrice").value(12345.00))
-                .andExpect(jsonPath("$.minStock").value(7));
+                .andExpect(jsonPath("$.data.name").value("Renamed"))
+                .andExpect(jsonPath("$.data.effectivePrice").value(12345.00))
+                .andExpect(jsonPath("$.data.minStock").value(7));
     }
 
     @Test
@@ -155,7 +155,7 @@ class VariantIT extends AbstractIntegrationTest {
         String body = mockMvc.perform(postItem(request, adminToken))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode created = objectMapper.readTree(body);
+        JsonNode created = objectMapper.readTree(body).get("data");
         return UUID.fromString(created.get("variants").get(0).get("id").asText());
     }
 
