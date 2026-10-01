@@ -1,4 +1,4 @@
-package com.logivault.stock;
+package com.logivault.entity;
 
 import com.logivault.entity.User;
 import com.logivault.entity.Variant;

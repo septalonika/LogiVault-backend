@@ -1,6 +1,7 @@
-package com.logivault.stock;
+package com.logivault.service;
 
 import com.logivault.entity.Item;
+import com.logivault.entity.MovementType;
 import com.logivault.entity.Role;
 import com.logivault.entity.User;
 import com.logivault.entity.Variant;

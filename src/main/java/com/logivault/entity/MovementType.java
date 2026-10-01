@@ -1,4 +1,4 @@
-package com.logivault.stock;
+package com.logivault.entity;
 
 public enum MovementType {
     STOCK_IN,

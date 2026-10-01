@@ -1,6 +1,6 @@
-package com.logivault.stock.dto;
+package com.logivault.dto.stock;
 
-import com.logivault.stock.MovementType;
+import com.logivault.entity.MovementType;
 
 import java.time.Instant;
 import java.util.UUID;

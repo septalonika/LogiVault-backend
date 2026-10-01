@@ -1,11 +1,13 @@
-package com.logivault.stock;
+package com.logivault.controller;
 
 import com.logivault.dto.PageResponse;
-import com.logivault.stock.dto.AdjustStockRequest;
-import com.logivault.stock.dto.LowStockResponse;
-import com.logivault.stock.dto.MovementResponse;
-import com.logivault.stock.dto.StockChangeResponse;
-import com.logivault.stock.dto.StockInRequest;
+import com.logivault.dto.stock.AdjustStockRequest;
+import com.logivault.dto.stock.LowStockResponse;
+import com.logivault.dto.stock.MovementResponse;
+import com.logivault.dto.stock.StockChangeResponse;
+import com.logivault.dto.stock.StockInRequest;
+import com.logivault.entity.MovementType;
+import com.logivault.service.StockService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

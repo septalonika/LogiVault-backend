@@ -1,4 +1,4 @@
-package com.logivault.stock;
+package com.logivault.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

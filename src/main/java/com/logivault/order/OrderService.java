@@ -2,6 +2,7 @@ package com.logivault.order;
 
 import com.logivault.config.LogiVaultProperties;
 import com.logivault.dto.PageResponse;
+import com.logivault.entity.MovementType;
 import com.logivault.entity.User;
 import com.logivault.entity.Variant;
 import com.logivault.exception.BusinessException;
@@ -14,8 +15,7 @@ import com.logivault.order.dto.OrderSummary;
 import com.logivault.repository.UserRepository;
 import com.logivault.repository.VariantRepository;
 import com.logivault.security.CurrentUser;
-import com.logivault.stock.MovementType;
-import com.logivault.stock.StockService;
+import com.logivault.service.StockService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;

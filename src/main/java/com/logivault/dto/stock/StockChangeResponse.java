@@ -1,4 +1,4 @@
-package com.logivault.stock.dto;
+package com.logivault.dto.stock;
 
 import java.util.UUID;
 
