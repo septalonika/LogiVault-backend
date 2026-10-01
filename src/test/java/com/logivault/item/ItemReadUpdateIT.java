@@ -18,7 +18,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -138,6 +140,39 @@ class ItemReadUpdateIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/v1/items/" + itemId + "/variants").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void deactivateThenReactivate_keepsTheRowAndFlipsActive() throws Exception {
+        String adminToken = adminAccessToken();
+        JsonNode created = createItem(adminToken, new CreateItemRequest("Deactivatable Item", null, BigDecimal.TEN, null));
+        UUID itemId = UUID.fromString(created.get("id").asText());
+
+        mockMvc.perform(delete("/api/v1/items/" + itemId).header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/items/" + itemId).header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        mockMvc.perform(patch("/api/v1/items/" + itemId + "/activate").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+    }
+
+    @Test
+    void staff_isForbiddenOnDeactivateAndActivate() throws Exception {
+        String adminToken = adminAccessToken();
+        JsonNode created = createItem(adminToken, new CreateItemRequest("Staff Deactivate Item", null, BigDecimal.TEN, null));
+        UUID itemId = UUID.fromString(created.get("id").asText());
+
+        User staff = testData.createUser(Role.STAFF, PASSWORD);
+        String staffToken = testData.accessTokenFor(staff, PASSWORD);
+
+        mockMvc.perform(delete("/api/v1/items/" + itemId).header("Authorization", "Bearer " + staffToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(patch("/api/v1/items/" + itemId + "/activate").header("Authorization", "Bearer " + staffToken))
+                .andExpect(status().isForbidden());
     }
 
     private String adminAccessToken() throws Exception {

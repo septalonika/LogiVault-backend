@@ -100,6 +100,18 @@ public class ItemService {
         return itemMapper.toResponse(item);
     }
 
+    @Transactional
+    public void deactivate(UUID id) {
+        findWithVariants(id).setActive(false);
+    }
+
+    @Transactional
+    public ItemResponse activate(UUID id) {
+        Item item = findWithVariants(id);
+        item.setActive(true);
+        return itemMapper.toResponse(item);
+    }
+
     private Item findWithVariants(UUID id) {
         return itemRepository.findWithVariantsById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));

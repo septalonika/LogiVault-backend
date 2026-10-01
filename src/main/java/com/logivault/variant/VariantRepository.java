@@ -10,11 +10,16 @@ import java.util.UUID;
 
 public interface VariantRepository extends JpaRepository<Variant, UUID> {
 
+    // Fetches the parent item too, since effectivePrice/VariantDetailResponse need it (avoids N+1).
+    @EntityGraph(attributePaths = "item")
     Optional<Variant> findBySku(String sku);
+
+    @Override
+    @EntityGraph(attributePaths = "item")
+    Optional<Variant> findById(UUID id);
 
     boolean existsBySkuIn(Collection<String> skus);
 
-    // Fetches the parent item too, since VariantResponse.effectivePrice needs it (avoids N+1).
     @EntityGraph(attributePaths = "item")
     List<Variant> findByItemIdOrderBySku(UUID itemId);
 }
