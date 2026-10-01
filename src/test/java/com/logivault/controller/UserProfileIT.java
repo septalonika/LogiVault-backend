@@ -29,9 +29,9 @@ class UserProfileIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(user.getEmail()))
-                .andExpect(jsonPath("$.role").value("STAFF"))
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.data.email").value(user.getEmail()))
+                .andExpect(jsonPath("$.data.role").value("STAFF"))
+                .andExpect(jsonPath("$.data.active").value(true));
     }
 
     @Test
@@ -67,7 +67,7 @@ class UserProfileIT extends AbstractIntegrationTest {
         String firstRefreshToken = firstLogin.get("refreshToken").asText();
 
         mockMvc.perform(changePasswordRequest(accessToken, oldPassword, newPassword))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(loginRequest(user.getEmail(), oldPassword))
                 .andExpect(status().isUnauthorized())

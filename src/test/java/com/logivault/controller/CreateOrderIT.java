@@ -47,24 +47,24 @@ class CreateOrderIT extends AbstractIntegrationTest {
         mockMvc.perform(postOrder(token, new OrderLineRequest(variantId, 3)))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.code").value(org.hamcrest.Matchers.startsWith("ORD-")))
-                .andExpect(jsonPath("$.total").value(75.0))
-                .andExpect(jsonPath("$.lines[0].qty").value(3))
-                .andExpect(jsonPath("$.lines[0].unitPrice").value(25.0))
-                .andExpect(jsonPath("$.createdBy.id").isNotEmpty());
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.data.code").value(org.hamcrest.Matchers.startsWith("ORD-")))
+                .andExpect(jsonPath("$.data.total").value(75.0))
+                .andExpect(jsonPath("$.data.lines[0].qty").value(3))
+                .andExpect(jsonPath("$.data.lines[0].unitPrice").value(25.0))
+                .andExpect(jsonPath("$.data.createdBy.id").isNotEmpty());
 
         mockMvc.perform(get("/api/v1/variants/" + variantId).header("Authorization", "Bearer " + token))
-                .andExpect(jsonPath("$.stock").value(7));
+                .andExpect(jsonPath("$.data.stock").value(7));
 
         mockMvc.perform(get("/api/v1/variants/" + variantId + "/movements?type=SALE")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].qty").value(-3))
-                .andExpect(jsonPath("$.content[0].stockBefore").value(10))
-                .andExpect(jsonPath("$.content[0].stockAfter").value(7))
-                .andExpect(jsonPath("$.content[0].orderCode").isNotEmpty());
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].qty").value(-3))
+                .andExpect(jsonPath("$.data[0].stockBefore").value(10))
+                .andExpect(jsonPath("$.data[0].stockAfter").value(7))
+                .andExpect(jsonPath("$.data[0].orderCode").isNotEmpty());
     }
 
     @Test
@@ -77,7 +77,7 @@ class CreateOrderIT extends AbstractIntegrationTest {
         String body = mockMvc.perform(postOrder(token, new OrderLineRequest(variantId, 2)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        String orderId = objectMapper.readTree(body).get("id").asText();
+        String orderId = objectMapper.readTree(body).get("data").get("id").asText();
 
         mockMvc.perform(put("/api/v1/items/" + item.get("id").asText())
                         .header("Authorization", "Bearer " + token)
@@ -97,12 +97,12 @@ class CreateOrderIT extends AbstractIntegrationTest {
         UUID variantId = createVariant(token, BigDecimal.TEN);
         stockIn(variantId, 5, token);
         mockMvc.perform(delete("/api/v1/variants/" + variantId).header("Authorization", "Bearer " + token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(postOrder(token, new OrderLineRequest(variantId, 1)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value("VARIANT_INACTIVE"))
-                .andExpect(jsonPath("$.skus.length()").value(1));
+                .andExpect(jsonPath("$.details.skus.length()").value(1));
     }
 
     @Test
@@ -116,13 +116,13 @@ class CreateOrderIT extends AbstractIntegrationTest {
         mockMvc.perform(postOrder(token, new OrderLineRequest(a, 2), new OrderLineRequest(b, 3)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("INSUFFICIENT_STOCK"))
-                .andExpect(jsonPath("$.lines.length()").value(1))
-                .andExpect(jsonPath("$.lines[0].variantId").value(b.toString()))
-                .andExpect(jsonPath("$.lines[0].requested").value(3))
-                .andExpect(jsonPath("$.lines[0].available").value(1));
+                .andExpect(jsonPath("$.details.lines.length()").value(1))
+                .andExpect(jsonPath("$.details.lines[0].variantId").value(b.toString()))
+                .andExpect(jsonPath("$.details.lines[0].requested").value(3))
+                .andExpect(jsonPath("$.details.lines[0].available").value(1));
 
         mockMvc.perform(get("/api/v1/variants/" + a).header("Authorization", "Bearer " + token))
-                .andExpect(jsonPath("$.stock").value(5));
+                .andExpect(jsonPath("$.data.stock").value(5));
     }
 
     @Test
@@ -130,7 +130,7 @@ class CreateOrderIT extends AbstractIntegrationTest {
         mockMvc.perform(postOrder(adminToken(), new OrderLineRequest(UUID.randomUUID(), 1)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("VARIANT_NOT_FOUND"))
-                .andExpect(jsonPath("$.variantIds.length()").value(1));
+                .andExpect(jsonPath("$.details.variantIds.length()").value(1));
     }
 
     @Test
@@ -191,7 +191,7 @@ class CreateOrderIT extends AbstractIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(body);
+        return objectMapper.readTree(body).get("data");
     }
 
     private UUID createVariant(String token, BigDecimal basePrice) throws Exception {

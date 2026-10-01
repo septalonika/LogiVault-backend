@@ -26,11 +26,11 @@ class AuthIT extends AbstractIntegrationTest {
     void login_withSeededAdminCredentials_returnsBothTokens() throws Exception {
         mockMvc.perform(loginRequest(ADMIN_EMAIL, ADMIN_PASSWORD))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.user.email").value(ADMIN_EMAIL))
-                .andExpect(jsonPath("$.user.role").value("ADMIN"));
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.user.email").value(ADMIN_EMAIL))
+                .andExpect(jsonPath("$.data.user.role").value("ADMIN"));
     }
 
     @Test
@@ -48,7 +48,7 @@ class AuthIT extends AbstractIntegrationTest {
         JsonNode wrongPassword = objectMapper.readTree(wrongPasswordBody);
         JsonNode unknownEmail = objectMapper.readTree(unknownEmailBody);
         assertThat(wrongPassword.get("code")).isEqualTo(unknownEmail.get("code"));
-        assertThat(wrongPassword.get("detail")).isEqualTo(unknownEmail.get("detail"));
+        assertThat(wrongPassword.get("message")).isEqualTo(unknownEmail.get("message"));
     }
 
     @Test
@@ -59,12 +59,12 @@ class AuthIT extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RefreshBody(firstRefreshToken))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
                 .andReturn();
 
         String rotatedToken = objectMapper.readTree(refreshResult.getResponse().getContentAsString())
-                .get("refreshToken").asText();
+                .get("data").get("refreshToken").asText();
         assertThat(rotatedToken).isNotEqualTo(firstRefreshToken);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
@@ -83,7 +83,7 @@ class AuthIT extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RefreshBody(refreshToken))))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +106,7 @@ class AuthIT extends AbstractIntegrationTest {
         String body = mockMvc.perform(loginRequest(email, password))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(body);
+        return objectMapper.readTree(body).get("data");
     }
 
     private org.springframework.test.web.servlet.RequestBuilder loginRequest(String email, String password) throws Exception {

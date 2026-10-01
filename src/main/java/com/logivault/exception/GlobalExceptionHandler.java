@@ -1,5 +1,6 @@
 package com.logivault.exception;
 
+import com.logivault.dto.WebResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -22,22 +23,18 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Turns every exception into an RFC 7807 {@link ProblemDetail} with an extra stable {@code code} field.
+ * Turns every exception into a {@link WebResponse} error body with a stable {@code code}.
  * Spring MVC's own exceptions (bad JSON, wrong method, type mismatch, ...) come through
- * {@link ResponseEntityExceptionHandler} and get their {@code code} in {@link #handleExceptionInternal}.
+ * {@link ResponseEntityExceptionHandler} and are converted in {@link #handleExceptionInternal}.
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-
-    static final String CODE = "code";
-    static final String ERRORS = "errors";
 
     /** DB constraint name → business error, for violations that slip past service-level checks. */
     private static final Map<String, ErrorCode> CONSTRAINT_CODES = Map.of(
@@ -47,63 +44,56 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     );
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<Object> handleBusiness(BusinessException ex, WebRequest request) {
-        ProblemDetail problem = problem(ex.getErrorCode(), ex.getMessage(), request);
-        ex.getProperties().forEach(problem::setProperty);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+    public ResponseEntity<Object> handleBusiness(BusinessException ex) {
+        Map<String, Object> details = ex.getProperties().isEmpty() ? null : ex.getProperties();
+        return error(ex.getErrorCode(), ex.getMessage(), null, details);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
+    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex) {
         List<FieldErrorItem> errors = ex.getConstraintViolations().stream()
                 .map(v -> new FieldErrorItem(v.getPropertyPath().toString(), v.getMessage()))
                 .toList();
-        return validationError(errors, request);
+        return validationError(errors);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Object> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest request) {
+    public ResponseEntity<Object> handleDataIntegrity(DataIntegrityViolationException ex) {
         String constraint = constraintName(ex);
         ErrorCode code = constraint == null ? null : CONSTRAINT_CODES.get(constraint);
         if (code == null) {
             log.error("Unmapped data integrity violation (constraint={})", constraint, ex);
             code = ErrorCode.INTERNAL_ERROR;
         }
-        ProblemDetail problem = problem(code, code.getDefaultMessage(), request);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+        return error(code);
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
-    public ResponseEntity<Object> handleOptimisticLock(OptimisticLockingFailureException ex, WebRequest request) {
-        ProblemDetail problem = problem(ErrorCode.CONCURRENT_MODIFICATION,
-                ErrorCode.CONCURRENT_MODIFICATION.getDefaultMessage(), request);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+    public ResponseEntity<Object> handleOptimisticLock(OptimisticLockingFailureException ex) {
+        return error(ErrorCode.CONCURRENT_MODIFICATION);
     }
 
     /** Unknown field in {@code ?sort=}. */
     @ExceptionHandler(PropertyReferenceException.class)
-    public ResponseEntity<Object> handlePropertyReference(PropertyReferenceException ex, WebRequest request) {
-        return validationError(List.of(new FieldErrorItem("sort", "Unknown property: " + ex.getPropertyName())), request);
+    public ResponseEntity<Object> handlePropertyReference(PropertyReferenceException ex) {
+        return validationError(List.of(new FieldErrorItem("sort", "Unknown property: " + ex.getPropertyName())));
     }
 
     /** {@code @PreAuthorize} failures raised inside controllers. */
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
-        ProblemDetail problem = problem(ErrorCode.FORBIDDEN, ErrorCode.FORBIDDEN.getDefaultMessage(), request);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
+        return error(ErrorCode.FORBIDDEN);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Object> handleAuthentication(AuthenticationException ex, WebRequest request) {
-        ProblemDetail problem = problem(ErrorCode.UNAUTHORIZED, ErrorCode.UNAUTHORIZED.getDefaultMessage(), request);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+    public ResponseEntity<Object> handleAuthentication(AuthenticationException ex) {
+        return error(ErrorCode.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleUnexpected(Exception ex, WebRequest request) {
         log.error("Unexpected error on {}", path(request), ex);
-        ProblemDetail problem = problem(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.getDefaultMessage(), request);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+        return error(ErrorCode.INTERNAL_ERROR);
     }
 
     // ---- Spring MVC exceptions -------------------------------------------------------------
@@ -117,7 +107,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .forEach(e -> errors.add(new FieldErrorItem(e.getField(), e.getDefaultMessage())));
         ex.getBindingResult().getGlobalErrors()
                 .forEach(e -> errors.add(new FieldErrorItem(e.getObjectName(), e.getDefaultMessage())));
-        return validationError(errors, request);
+        return validationError(errors);
     }
 
     /** Constraint annotations on {@code @PathVariable} / {@code @RequestParam}. */
@@ -129,42 +119,40 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ex.getParameterValidationResults().forEach(result -> result.getResolvableErrors().forEach(error ->
                 errors.add(new FieldErrorItem(result.getMethodParameter().getParameterName(),
                         error.getDefaultMessage()))));
-        return validationError(errors, request);
+        return validationError(errors);
     }
 
-    /** Every response built by {@link ResponseEntityExceptionHandler} passes here: add {@code code} + {@code instance}. */
+    /** Every other response built by {@link ResponseEntityExceptionHandler} passes here and becomes an envelope. */
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
                                                              HttpStatusCode statusCode, WebRequest request) {
-        // Some handlers (e.g. 405) pass body=null and let the superclass build it; build it here so we can enrich it
+        // Some handlers (e.g. 405) pass body=null and let the superclass build it; build it here to read its detail
         if (body == null && ex instanceof ErrorResponse errorResponse) {
             body = errorResponse.updateAndGetBody(getMessageSource(), LocaleContextHolder.getLocale());
         }
-        if (body instanceof ProblemDetail problem) {
-            if (problem.getProperties() == null || !problem.getProperties().containsKey(CODE)) {
-                problem.setProperty(CODE, codeFor(statusCode));
-            }
-            if (problem.getInstance() == null) {
-                problem.setInstance(URI.create(path(request)));
-            }
+        if (!(body instanceof WebResponse<?>)) {
+            String message = body instanceof ProblemDetail problem && problem.getDetail() != null
+                    ? problem.getDetail()
+                    : ex.getMessage();
+            body = WebResponse.error(statusCode.value(), message, codeFor(statusCode), null, null);
         }
         return super.handleExceptionInternal(ex, body, headers, statusCode, request);
     }
 
     // ---- helpers -----------------------------------------------------------------------------
 
-    private ResponseEntity<Object> validationError(List<FieldErrorItem> errors, WebRequest request) {
-        ProblemDetail problem = problem(ErrorCode.VALIDATION_ERROR, ErrorCode.VALIDATION_ERROR.getDefaultMessage(), request);
-        problem.setProperty(ERRORS, errors);
-        return ResponseEntity.status(problem.getStatus()).body(problem);
+    private static ResponseEntity<Object> validationError(List<FieldErrorItem> errors) {
+        return error(ErrorCode.VALIDATION_ERROR, ErrorCode.VALIDATION_ERROR.getDefaultMessage(), errors, null);
     }
 
-    private static ProblemDetail problem(ErrorCode code, String detail, WebRequest request) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(code.getStatus(), detail);
-        problem.setTitle(code.getStatus().getReasonPhrase());
-        problem.setInstance(URI.create(path(request)));
-        problem.setProperty(CODE, code.name());
-        return problem;
+    private static ResponseEntity<Object> error(ErrorCode code) {
+        return error(code, code.getDefaultMessage(), null, null);
+    }
+
+    private static ResponseEntity<Object> error(ErrorCode code, String message, List<FieldErrorItem> errors,
+                                                Map<String, Object> details) {
+        return ResponseEntity.status(code.getStatus())
+                .body(WebResponse.error(code.getStatus().value(), message, code.name(), errors, details));
     }
 
     /** Generic Spring MVC errors: 400 → VALIDATION_ERROR, 500 → INTERNAL_ERROR, others → HTTP status name. */

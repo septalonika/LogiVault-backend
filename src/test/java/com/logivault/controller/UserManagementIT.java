@@ -40,8 +40,8 @@ class UserManagementIT extends AbstractIntegrationTest {
                         Map.of("name", "New Staff", "email", email, "password", "StaffPass123", "role", "STAFF")))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.role").value("STAFF"))
-                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.data.role").value("STAFF"))
+                .andExpect(jsonPath("$.data.active").value(true))
                 .andExpect(content().string(not(containsString("password"))));
 
         mockMvc.perform(login(email, "StaffPass123")).andExpect(status().isOk());
@@ -65,11 +65,11 @@ class UserManagementIT extends AbstractIntegrationTest {
         String email = testData.uniqueEmail();
         UUID staffId = create(admin, email, "STAFF");
         String refreshToken = objectMapper.readTree(mockMvc.perform(login(email, "StaffPass123"))
-                .andReturn().getResponse().getContentAsString()).get("refreshToken").asText();
+                .andReturn().getResponse().getContentAsString()).get("data").get("refreshToken").asText();
 
         mockMvc.perform(json(patch("/api/v1/users/" + staffId + "/status"), admin, Map.of("active", false)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(false));
+                .andExpect(jsonPath("$.data.active").value(false));
 
         mockMvc.perform(login(email, "StaffPass123")).andExpect(status().isUnauthorized());
         mockMvc.perform(json(post("/api/v1/auth/refresh"), null, Map.of("refreshToken", refreshToken)))
@@ -91,7 +91,7 @@ class UserManagementIT extends AbstractIntegrationTest {
 
         mockMvc.perform(json(put("/api/v1/users/" + adminUser.getId()), admin, Map.of("name", "Renamed", "role", "ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Renamed"));
+                .andExpect(jsonPath("$.data.name").value("Renamed"));
     }
 
     @Test
@@ -100,10 +100,10 @@ class UserManagementIT extends AbstractIntegrationTest {
         String email = testData.uniqueEmail();
         UUID staffId = create(admin, email, "STAFF");
         String refreshToken = objectMapper.readTree(mockMvc.perform(login(email, "StaffPass123"))
-                .andReturn().getResponse().getContentAsString()).get("refreshToken").asText();
+                .andReturn().getResponse().getContentAsString()).get("data").get("refreshToken").asText();
 
         mockMvc.perform(json(post("/api/v1/users/" + staffId + "/reset-password"), admin, Map.of("newPassword", "BrandNew123")))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(login(email, "StaffPass123")).andExpect(status().isUnauthorized());
         mockMvc.perform(login(email, "BrandNew123")).andExpect(status().isOk());
@@ -120,12 +120,12 @@ class UserManagementIT extends AbstractIntegrationTest {
         mockMvc.perform(json(patch("/api/v1/users/" + staffId + "/status"), admin, Map.of("active", false)));
 
         mockMvc.perform(get("/api/v1/users?q=" + marker).header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(2));
+                .andExpect(jsonPath("$.meta.totalElements").value(2));
         mockMvc.perform(get("/api/v1/users?q=" + marker + "&role=ADMIN").header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.meta.totalElements").value(1));
         mockMvc.perform(get("/api/v1/users?q=" + marker + "&active=false").header("Authorization", "Bearer " + admin))
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(staffId.toString()));
+                .andExpect(jsonPath("$.meta.totalElements").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(staffId.toString()));
     }
 
     @Test
@@ -170,7 +170,7 @@ class UserManagementIT extends AbstractIntegrationTest {
                         Map.of("name", "Test User", "email", email, "password", "StaffPass123", "role", role)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode created = objectMapper.readTree(body);
+        JsonNode created = objectMapper.readTree(body).get("data");
         return UUID.fromString(created.get("id").asText());
     }
 

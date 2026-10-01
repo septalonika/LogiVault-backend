@@ -1,9 +1,11 @@
 package com.logivault.controller;
 
+import org.springframework.http.HttpStatus;
+import java.util.List;
+import com.logivault.dto.WebResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.logivault.dto.PageResponse;
 import com.logivault.dto.user.ChangePasswordRequest;
 import com.logivault.dto.user.CreateUserRequest;
 import com.logivault.dto.user.ResetPasswordRequest;
@@ -45,28 +47,28 @@ public class UserController {
     @Operation(summary = "Current user profile")
     @ApiResponse(responseCode = "200", description = "Profile")
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> me() {
-        return ResponseEntity.ok(userService.getCurrentUser());
+    public ResponseEntity<WebResponse<UserResponse>> me() {
+        return WebResponse.ok("Profile retrieved", userService.getCurrentUser());
     }
 
     @Operation(summary = "Change own password")
-    @ApiResponse(responseCode = "204", description = "Password changed")
+    @ApiResponse(responseCode = "200", description = "Password changed")
     @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR or INVALID_OLD_PASSWORD")
     @PutMapping("/me/password")
-    public ResponseEntity<Void> changeOwnPassword(@Valid @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<WebResponse<Void>> changeOwnPassword(@Valid @RequestBody ChangePasswordRequest request) {
         userService.changeOwnPassword(request);
-        return ResponseEntity.noContent().build();
+        return WebResponse.ok("Password changed");
     }
 
     @Operation(summary = "List users (ADMIN)")
     @ApiResponse(responseCode = "200", description = "Page of users")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public PageResponse<UserResponse> list(@RequestParam(required = false) String q,
+    public WebResponse<List<UserResponse>> list(@RequestParam(required = false) String q,
                                             @RequestParam(required = false) Role role,
                                             @RequestParam(required = false) Boolean active,
                                             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return userService.list(q, role, active, pageable);
+        return WebResponse.page("Users retrieved", userService.list(q, role, active, pageable));
     }
 
     @Operation(summary = "Create a user (ADMIN)")
@@ -74,9 +76,10 @@ public class UserController {
     @ApiResponse(responseCode = "409", description = "EMAIL_ALREADY_EXISTS")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
+    public ResponseEntity<WebResponse<UserResponse>> create(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.create(request);
-        return ResponseEntity.created(URI.create("/api/v1/users/" + response.id())).body(response);
+        return ResponseEntity.created(URI.create("/api/v1/users/" + response.id()))
+                .body(WebResponse.of(HttpStatus.CREATED, "User created", response));
     }
 
     @Operation(summary = "Get a user (ADMIN)")
@@ -84,8 +87,8 @@ public class UserController {
     @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.getById(id));
+    public ResponseEntity<WebResponse<UserResponse>> getById(@PathVariable UUID id) {
+        return WebResponse.ok("User retrieved", userService.getById(id));
     }
 
     @Operation(summary = "Update name and role (ADMIN)")
@@ -94,8 +97,8 @@ public class UserController {
     @ApiResponse(responseCode = "409", description = "SELF_MODIFICATION_NOT_ALLOWED")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
-        return ResponseEntity.ok(userService.update(id, request));
+    public ResponseEntity<WebResponse<UserResponse>> update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
+        return WebResponse.ok("User updated", userService.update(id, request));
     }
 
     @Operation(summary = "Activate or deactivate a user (ADMIN)")
@@ -104,17 +107,17 @@ public class UserController {
     @ApiResponse(responseCode = "409", description = "SELF_MODIFICATION_NOT_ALLOWED")
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> updateStatus(@PathVariable UUID id, @Valid @RequestBody UpdateUserStatusRequest request) {
-        return ResponseEntity.ok(userService.updateStatus(id, request));
+    public ResponseEntity<WebResponse<UserResponse>> updateStatus(@PathVariable UUID id, @Valid @RequestBody UpdateUserStatusRequest request) {
+        return WebResponse.ok("User status updated", userService.updateStatus(id, request));
     }
 
     @Operation(summary = "Reset a user password (ADMIN)")
-    @ApiResponse(responseCode = "204", description = "Password reset")
+    @ApiResponse(responseCode = "200", description = "Password reset")
     @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND")
     @PostMapping("/{id}/reset-password")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> resetPassword(@PathVariable UUID id, @Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<WebResponse<Void>> resetPassword(@PathVariable UUID id, @Valid @RequestBody ResetPasswordRequest request) {
         userService.resetPassword(id, request);
-        return ResponseEntity.noContent().build();
+        return WebResponse.ok("Password reset");
     }
 }

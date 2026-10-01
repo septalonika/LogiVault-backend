@@ -22,6 +22,6 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
             throws IOException {
-        SecurityProblemWriter.write(response, request, objectMapper, ErrorCode.UNAUTHORIZED);
+        SecurityErrorWriter.write(response, objectMapper, ErrorCode.UNAUTHORIZED);
     }
 }

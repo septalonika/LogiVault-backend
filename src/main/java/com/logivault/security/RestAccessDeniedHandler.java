@@ -22,6 +22,6 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
             throws IOException {
-        SecurityProblemWriter.write(response, request, objectMapper, ErrorCode.FORBIDDEN);
+        SecurityErrorWriter.write(response, objectMapper, ErrorCode.FORBIDDEN);
     }
 }

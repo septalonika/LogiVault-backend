@@ -52,8 +52,8 @@ class LedgerInvariantIT extends AbstractIntegrationTest {
                     String body = send(admin, "/api/v1/orders",
                             Map.of("lines", List.of(Map.of("variantId", variant.toString(), "qty", 1 + random.nextInt(8)))));
                     JsonNode created = objectMapper.readTree(body);
-                    if (created.has("id")) {
-                        orderIds.add(created.get("id").asText());
+                    if (created.path("data").has("id")) {
+                        orderIds.add(created.get("data").get("id").asText());
                     }
                 }
                 default -> {
