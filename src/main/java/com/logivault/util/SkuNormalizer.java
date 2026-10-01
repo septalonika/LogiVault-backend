@@ -1,4 +1,4 @@
-package com.logivault.variant;
+package com.logivault.util;
 
 public final class SkuNormalizer {
 

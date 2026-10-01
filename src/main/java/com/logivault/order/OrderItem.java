@@ -1,6 +1,6 @@
 package com.logivault.order;
 
-import com.logivault.variant.Variant;
+import com.logivault.entity.Variant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

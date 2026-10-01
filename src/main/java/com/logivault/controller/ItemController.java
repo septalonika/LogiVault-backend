@@ -1,13 +1,14 @@
-package com.logivault.item;
+package com.logivault.controller;
 
 import com.logivault.dto.PageResponse;
-import com.logivault.item.dto.CreateItemRequest;
-import com.logivault.item.dto.ItemResponse;
-import com.logivault.item.dto.ItemSummary;
-import com.logivault.item.dto.UpdateItemRequest;
-import com.logivault.variant.VariantService;
-import com.logivault.variant.dto.CreateVariantRequest;
-import com.logivault.variant.dto.VariantResponse;
+import com.logivault.dto.item.CreateItemRequest;
+import com.logivault.dto.item.ItemResponse;
+import com.logivault.dto.item.ItemSummary;
+import com.logivault.dto.item.UpdateItemRequest;
+import com.logivault.dto.variant.CreateVariantRequest;
+import com.logivault.dto.variant.VariantResponse;
+import com.logivault.service.ItemService;
+import com.logivault.service.VariantService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

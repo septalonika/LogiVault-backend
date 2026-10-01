@@ -1,6 +1,6 @@
-package com.logivault.item.dto;
+package com.logivault.dto.item;
 
-import com.logivault.variant.dto.CreateVariantRequest;
+import com.logivault.dto.variant.CreateVariantRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;

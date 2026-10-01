@@ -1,7 +1,8 @@
-package com.logivault.variant;
+package com.logivault.mapper;
 
-import com.logivault.variant.dto.VariantDetailResponse;
-import com.logivault.variant.dto.VariantResponse;
+import com.logivault.dto.variant.VariantDetailResponse;
+import com.logivault.dto.variant.VariantResponse;
+import com.logivault.entity.Variant;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

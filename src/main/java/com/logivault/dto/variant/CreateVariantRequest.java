@@ -1,4 +1,4 @@
-package com.logivault.variant.dto;
+package com.logivault.dto.variant;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

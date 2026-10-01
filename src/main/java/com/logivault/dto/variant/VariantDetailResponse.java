@@ -1,10 +1,10 @@
-package com.logivault.variant.dto;
+package com.logivault.dto.variant;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
-public record VariantResponse(
+public record VariantDetailResponse(
         UUID id,
         String sku,
         String name,
@@ -14,6 +14,9 @@ public record VariantResponse(
         int stock,
         int minStock,
         boolean lowStock,
-        boolean active
+        boolean active,
+        UUID itemId,
+        String itemName,
+        boolean itemActive
 ) {
 }

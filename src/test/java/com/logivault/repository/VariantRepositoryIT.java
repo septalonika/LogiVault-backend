@@ -1,7 +1,8 @@
-package com.logivault.variant;
+package com.logivault.repository;
 
-import com.logivault.item.Item;
-import com.logivault.item.ItemRepository;
+import com.logivault.entity.Item;
+import com.logivault.entity.Variant;
+import com.logivault.repository.ItemRepository;
 import com.logivault.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

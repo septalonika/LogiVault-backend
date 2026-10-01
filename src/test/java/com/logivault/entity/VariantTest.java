@@ -1,6 +1,6 @@
-package com.logivault.variant;
+package com.logivault.entity;
 
-import com.logivault.item.Item;
+import com.logivault.entity.Item;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
