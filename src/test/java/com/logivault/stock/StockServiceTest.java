@@ -5,7 +5,9 @@ import com.logivault.common.exception.ErrorCode;
 import com.logivault.item.Item;
 import com.logivault.user.Role;
 import com.logivault.user.User;
+import com.logivault.user.UserRepository;
 import com.logivault.variant.Variant;
+import com.logivault.variant.VariantRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -25,7 +27,8 @@ class StockServiceTest {
 
     private final StockMovementRepository stockMovementRepository = mock(StockMovementRepository.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
-    private final StockService stockService = new StockService(stockMovementRepository, clock);
+    private final StockService stockService = new StockService(stockMovementRepository,
+            mock(VariantRepository.class), mock(UserRepository.class), mock(StockMovementMapper.class), clock);
 
     @Test
     void applyMovement_withEnoughStock_updatesVariantAndSavesMovement() {
